@@ -46,13 +46,13 @@ LIB_DIR="${DIST_DIR}/lib"
 
 # **** ADJUST DEPENDENCY VERSIONS HERE AS NEEDED ****
 JAVA_CLASSPATH="${LIB_DIR}/${PROJECT_NAME}-${PROJECT_VERSION}.jar"
-JAVA_CLASSPATH+=":${LIB_DIR}/iDocLinkLib-${PROJECT_VERSION}.jar"
+JAVA_CLASSPATH+=":${LIB_DIR}/CyrusHABLib-${PROJECT_VERSION}.jar"
 JAVA_CLASSPATH+=":${LIB_DIR}/commons-daemon-1.0.15.jar"
 JAVA_CLASSPATH+=":${LIB_DIR}/slf4j-api-1.7.25.jar"
 JAVA_CLASSPATH+=":${LIB_DIR}/logback-core-1.2.3.jar"
 JAVA_CLASSPATH+=":${LIB_DIR}/logback-classic-1.2.3.jar"
 
-JAVA_MAIN_CLASS="net.smartdatasystems.idoclink.service.LinkDaemon"
+JAVA_MAIN_CLASS="net.cyrusbuilt.cyrushab.daemon.HABDaemon"
 JAVA_OPTS="-Ddistribution.dir=${DIST_DIR}"
 
 # If JAVA_HOME is not already defined, use our utility class to try and find it.
@@ -67,7 +67,7 @@ if [[ ${JAVA_HOME} == */jre ]]; then
 fi
 
 # If we aren't in debug mode, redirect stdout and stderr to their appropriate log files.
-PID_FILE=/tmp/iDocLinkService.pid
+PID_FILE=/tmp/${PROJECT_NAME}.pid
 if [ -z ${DEBUG} ]; then
     LOG_OUT=/tmp/${PROJECT_NAME}.out
     LOG_ERR=/tmp/${PROJECT_NAME}.err

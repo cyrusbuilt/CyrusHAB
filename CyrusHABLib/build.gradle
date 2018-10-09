@@ -1,0 +1,31 @@
+apply plugin: 'idea'
+apply plugin: 'java-library'
+
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.12'
+}
+
+version = '0.1.0'
+
+javadoc {
+    source = sourceSets.main.allJava
+    classpath = configurations.compile
+}
+
+jar {
+    manifest {
+        attributes('Implementation-Tile': project.name, 'Implementation-Version': project.version)
+    }
+}

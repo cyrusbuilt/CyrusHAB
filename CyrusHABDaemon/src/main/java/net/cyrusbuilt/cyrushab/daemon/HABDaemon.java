@@ -35,6 +35,61 @@ public class HABDaemon implements Daemon {
 
     @Override
     public void init(DaemonContext context) throws DaemonInitException, Exception {
+        final Object[] args = context.getArguments();
+        logger.info("HABDaemon initialized with arguments {}.", args);
+        _mainThread = new Thread() {
+            private final Object syncLock = new Object();
+            private volatile long lastTick = 0;
 
+            @Override
+            public synchronized void start() {
+                HABDaemon.this.setStopped(false);
+                super.start();
+            }
+
+            @Override
+            public void run() {
+                synchronized (syncLock) {
+                    while (!_stopped) {
+                        long now = System.currentTimeMillis();
+                        if ((now - lastTick) >= 1000) {
+                            lastTick = now;
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    @Override
+    public void start() throws Exception {
+        logger.info("HABDaemon starting...");
+        _mainThread.start();
+    }
+
+    @Override
+    public void stop() throws Exception {
+        logger.info("Stopping HABDaemon...");
+        setStopped(true);
+        try {
+            _mainThread.join(1000);
+        }
+        catch (InterruptedException ex) {
+            System.err.println(ex.getMessage());
+            throw ex;
+        }
+    }
+
+    @Override
+    public void destroy() {
+        if (isRunning()) {
+            try {
+                stop();
+            }
+            catch (Exception ignored) {
+            }
+        }
+
+        _mainThread = null;
     }
 }
