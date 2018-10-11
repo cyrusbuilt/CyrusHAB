@@ -5,6 +5,9 @@ buildscript {
     repositories {
         jcenter()
         mavenCentral()
+        maven {
+            url "https://repo.eclipse.org/content/repositories/paho-releases"
+        }
     }
 }
 
@@ -14,6 +17,12 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.jetbrains:annotations:16.0.2'
+    implementation 'org.apache.commons:commons-lang3:3.8.1'
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.0'
+    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
+    implementation 'ch.qos.logback:logback-core:1.2.3'
     testImplementation 'junit:junit:4.12'
 }
 

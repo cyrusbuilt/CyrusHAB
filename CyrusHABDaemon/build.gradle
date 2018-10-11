@@ -19,6 +19,9 @@ targetCompatibility = JavaVersion.VERSION_1_8
 
 dependencies {
     implementation project(':CyrusHABLib')
+    implementation 'org.jetbrains:annotations:16.0.2'
+    implementation 'com.googlecode.json-simple:json-simple:1.1'
+    implementation 'org.apache.commons:commons-lang3:3.8.1'
     implementation 'commons-daemon:commons-daemon:1.0.15'
     implementation 'org.slf4j:slf4j-api:1.7.25'
     implementation 'ch.qos.logback:logback-classic:1.2.3'
@@ -29,6 +32,10 @@ version = '0.1.0'
 mainClassName = 'net.cyrusbuilt.cyrushab.daemon.HABDaemon'
 
 jar {
+    from('src/main/resources') {
+        include 'config.json'
+    }
+
     manifest {
         attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
     }
