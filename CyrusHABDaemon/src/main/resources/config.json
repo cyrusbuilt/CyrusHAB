@@ -1,6 +1,11 @@
 {
+  "client_id": "hab_daemon_1",
   "broker": "127.0.0.1",
   "port": 1883,
   "username": "",
-  "password": ""
+  "password": "",
+  "hab_status_topic": "cyrushab/system/status",
+  "hab_control_topic": "cyrushab/system/control",
+  "hab_thing_status_topic_base": "cyrushab/thing/status",
+  "hab_thing_control_topic_base": "cyrushab/thing/control"
 }

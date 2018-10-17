@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.sql.Timestamp;
 
 public final class Util {
     private Util() {}
@@ -29,5 +30,9 @@ public final class Util {
         }
 
         return null;
+    }
+
+    public static Timestamp getCurrentTimestamp() {
+        return new Timestamp(System.currentTimeMillis());
     }
 }

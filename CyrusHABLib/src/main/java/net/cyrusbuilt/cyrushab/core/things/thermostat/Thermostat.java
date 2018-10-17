@@ -1,99 +1,104 @@
-package net.cyrusbuilt.cyrushab.core.things.switches;
+package net.cyrusbuilt.cyrushab.core.things.thermostat;
 
 import net.cyrusbuilt.cyrushab.core.Disposable;
 import net.cyrusbuilt.cyrushab.core.ObjectDisposedException;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
-
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An abstraction of a switch/button or a device that can be switched on/off.
+ * An abstraction of a thermostat for HVAC.
  */
-public abstract class Switch implements Thing {
+public abstract class Thermostat implements Thing {
     /**
-     * A switch state change event.
+     * The key name for thermostat mode.
      */
-    public static class SwitchEvent {
-        private SwitchState _oldState = SwitchState.OFF;
-        private SwitchState _newState = SwitchState.OFF;
+    public static final String THERMOSTAT_MODE = "mode";
+
+    /**
+     * A thermostat state change event.
+     */
+    public static class ThermostatEvent {
         private String _name = StringUtils.EMPTY;
+        private ThermostatState _oldState = ThermostatState.UNKNOWN;
+        private ThermostatState _newState = ThermostatState.UNKNOWN;
 
         /**
-         * Creates a new instance of Switch.SwitchEvent with the old and new states, and device name.
-         * @param oldState The previous state of the switch.
-         * @param newState The new (current) state of the switch.
-         * @param name The switch name.
+         * Constructs a new instance of {@link ThermostatEvent} with the name, previous state, and current state.
+         * @param name The name of the thermostat.
+         * @param oldState The previous state.
+         * @param newState The new (current) state.
          */
-        public SwitchEvent(SwitchState oldState, SwitchState newState, String name) {
+        public ThermostatEvent(String name, ThermostatState oldState, ThermostatState newState) {
+            _name = name;
             _oldState = oldState;
             _newState = newState;
-            _name = name;
         }
 
         /**
-         * Gets the previous state of the switch.
-         * @return The previous state.
+         * Gets the name of the thermostat.
+         * @return The name.
          */
-        public SwitchState oldState() {
+        public String getName() {
+            return _name;
+        }
+
+        /**
+         * Gets the old (previous) state of the thermostat.
+         * @return the previous state.
+         */
+        public ThermostatState getOldState() {
             return _oldState;
         }
 
         /**
-         * Gets the new (current) state of the switch.
-         * @return The current state.
+         * Gets the new (current) state of the thermostat.
+         * @return the current state.
          */
-        public SwitchState newState() {
+        public ThermostatState getNewState() {
             return _newState;
-        }
-
-        /**
-         * Gets the name of the switch.
-         * @return The name of the switch.
-         */
-        public String name() {
-            return _name;
         }
     }
 
     /**
-     * The event listener interface for switch state change events.
+     * The event listener interface for thermostat state change events.
      */
-    public interface OnSwitchStateChangeListener {
+    public interface OnThermostatStateChangeListener {
         /**
-         * Handles switch state change events.
-         * @param event The state change info.
+         * Handles state change events.
+         * @param event The event info.
          */
-        void onStateChanged(SwitchEvent event);
+        void onStateChanged(ThermostatEvent event);
     }
 
     private String _name = StringUtils.EMPTY;
     private Object _tag = null;
+    private final ThingType _type = ThingType.THERMOSTAT;
     private boolean _isDisposed = false;
-    private volatile SwitchState _state = SwitchState.OFF;
-    private List<OnSwitchStateChangeListener> _listeners;
+    private volatile ThermostatState _state = ThermostatState.UNKNOWN;
+    private List<OnThermostatStateChangeListener> _listeners;
     private String _mqttControlTopic = StringUtils.EMPTY;
     private String _mqttStatusTopic = StringUtils.EMPTY;
     private boolean _isReadonly = true;
     private boolean _enabled = true;
     private int _id = -1;
+    private ThermostatMode _mode = ThermostatMode.OFF;
 
     /**
-     * Creates a new instance of {@link Switch} (default constructor).
+     * Creates a new instance of {@link Thermostat} (default constructor).
      */
-    protected Switch() {
+    protected Thermostat() {
         _listeners = new ArrayList<>();
     }
 
     /**
-     * Creates a new instance of {@link Switch} with the device name.
-     * @param name The name of the device.
+     * Creates a new instance of {@link Thermostat} with the name of the device.
+     * @param name The thermostat name.
      */
-    protected Switch(String name) {
+    protected Thermostat(String name) {
         _listeners = new ArrayList<>();
         _name = name;
     }
@@ -158,7 +163,7 @@ public abstract class Switch implements Thing {
      */
     @Override
     public ThingType type() {
-        return ThingType.SWITCH;
+        return ThingType.THERMOSTAT;
     }
 
     /**
@@ -239,7 +244,7 @@ public abstract class Switch implements Thing {
      */
     protected void setEnabled(boolean enabled) throws ObjectDisposedException {
         if (isDisposed()) {
-            throw new ObjectDisposedException(Switch.class.getCanonicalName());
+            throw new ObjectDisposedException(Thermostat.class.getCanonicalName());
         }
         _enabled = enabled;
     }
@@ -247,9 +252,9 @@ public abstract class Switch implements Thing {
     /**
      * Adds an event listener for this Switch instance.
      * @param listener The listener to add.
-     * @throws ObjectDisposedException if this instance is disposed.
+     * @throws ObjectDisposedException if this instance has been disposed.
      */
-    public void addListener(@NotNull OnSwitchStateChangeListener listener) throws ObjectDisposedException {
+    public void addListener(OnThermostatStateChangeListener listener) throws ObjectDisposedException {
         if (isDisposed()) {
             throw new ObjectDisposedException(this.getClass().getCanonicalName());
         }
@@ -264,12 +269,12 @@ public abstract class Switch implements Thing {
      * @param event The event info.
      * @throws ObjectDisposedException if this instance has been disposed.
      */
-    public void notifyListeners(@NotNull SwitchEvent event) throws ObjectDisposedException {
+    public void notifyListeners(ThermostatEvent event) throws ObjectDisposedException {
         if (isDisposed()) {
             throw new ObjectDisposedException(this.getClass().getCanonicalName());
         }
 
-        for (OnSwitchStateChangeListener listener : _listeners) {
+        for (OnThermostatStateChangeListener listener : _listeners) {
             listener.onStateChanged(event);
         }
     }
@@ -278,7 +283,6 @@ public abstract class Switch implements Thing {
      * (non-Javadoc)
      * @see Disposable#dispose()
      */
-    @Override
     public void dispose() {
         if (_isDisposed) {
             return;
@@ -291,7 +295,8 @@ public abstract class Switch implements Thing {
 
         _name = null;
         _tag = null;
-        _state = SwitchState.OFF;
+        _state = ThermostatState.UNKNOWN;
+        _mode = ThermostatMode.OFF;
         _mqttControlTopic = null;
         _mqttStatusTopic = null;
         _enabled = false;
@@ -303,35 +308,35 @@ public abstract class Switch implements Thing {
      * Gets the current state of the switch.
      * @return The current state.
      */
-    public synchronized SwitchState state() {
+    public synchronized ThermostatState state() {
         return _state;
     }
 
     /**
-     * Sets the state of this switch.
-     * @param state The new state.
+     * Sets the current state of the thermostat.
+     * @param state The state to set.
      * @throws ObjectDisposedException if this instance has been disposed.
      */
-    protected synchronized void setState(SwitchState state) throws ObjectDisposedException {
+    protected synchronized void setState(ThermostatState state) throws ObjectDisposedException {
         if (_state != state) {
-            notifyListeners(new SwitchEvent(_state, state, _name));
+            notifyListeners(new ThermostatEvent(_name, _state, state));
             _state = state;
         }
     }
 
     /**
-     * Gets whether the Swith is "On".
-     * @return true if "On"; Otherwise, false.
+     *
+     * @return
      */
-    public boolean isOn() {
-        return _state == SwitchState.ON;
+    public ThermostatMode mode() {
+        return _mode;
     }
 
     /**
-     * Gets whether this Switch is "Off".
-     * @return true if "Off"; Otherwise, false.
+     *
+     * @param mode
      */
-    public boolean isOff() {
-        return _state == SwitchState.OFF;
+    public void setMode(ThermostatMode mode) {
+        _mode = mode;
     }
 }

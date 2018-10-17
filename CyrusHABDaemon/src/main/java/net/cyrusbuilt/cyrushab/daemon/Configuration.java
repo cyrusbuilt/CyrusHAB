@@ -1,6 +1,7 @@
 package net.cyrusbuilt.cyrushab.daemon;
 
 
+import net.cyrusbuilt.cyrushab.core.ObjectDisposedException;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
 import net.cyrusbuilt.cyrushab.core.things.switches.Switch;
@@ -17,18 +18,55 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Global configuration manager.
+ */
 public final class Configuration {
+    /**
+     * This is a static class, thus a private constructor.
+     */
     private Configuration() {}
 
     private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
+    private static final String CONFIG_CLIENT_ID = "client_id";
+    private static final String CONFIG_BROKER = "broker";
+    private static final String CONFIG_PORT = "port";
+    private static final String CONFIG_USERNAME = "username";
+    private static final String CONFIG_PASSWORD = "password";
+    private static final String CONFIG_SYS_STATUS_TOPIC = "hab_status_topic";
+    private static final String CONFIG_SYS_CONTROL_TOPIC = "hab_control_topic";
+    private static final String CONFIG_THING_STATUS_TOPIC_BASE = "cyrushab/thing/status";
+    private static final String CONFIG_THING_CONTROL_TOPIC_BASE = "cyrushab/thing/control";
+    private static final String THING_NAME = "name";
+    private static final String THING_CONTROL_TOPIC = "control_topic";
+    private static final String THING_STATUS_TOPIC = "status_topic";
+    private static final String THING_ENABLED = "enabled";
+    private static final String THING_READONLY = "readonly";
+    private static final String THING_ID = "id";
+    private static final String THING_TYPE = "type";
+
     private static File _configFile = null;
     private static File _thingRegistry = null;
+    private static String _clientID = StringUtils.EMPTY;
     private static String _mqttBroker = StringUtils.EMPTY;
     private static long _port = 1883;
     private static String _username = StringUtils.EMPTY;
     private static String _password = StringUtils.EMPTY;
+    private static String _sysStatusTopic = StringUtils.EMPTY;
+    private static String _sysControlTopic = StringUtils.EMPTY;
+    private static String _thingStatusTopicBase = StringUtils.EMPTY;
+    private static String _thingControlTopicBase = StringUtils.EMPTY;
     private static List<Thing> _allThings = null;
 
+    /**
+     * Initialize the configuration. This will attempt to read the local config file. If not found, then the default
+     * config file will be copied from an internal resource to the config directory which is a subdirectory of
+     * application's execution directory and loaded from there. If the config directory does not exist, it will be
+     * created first.
+     * @throws FileNotFoundException if unable to create the config directory or unable to retrieve the default config
+     * from the internal resource, or unable to copy the default config file to the config directory, or unable to
+     * create the thing directory.
+     */
     public static void initialize() throws FileNotFoundException {
         _allThings = new ArrayList<>();
 
@@ -89,28 +127,39 @@ public final class Configuration {
         }
     }
 
+    /**
+     * Reloads the system configuration values from the config file.
+     */
     public static void reloadConfig() {
         logger.info("Reading configuration...");
         JSONParser parser = new JSONParser();
         try {
             Object obj = parser.parse(new FileReader(_configFile.getAbsolutePath()));
             JSONObject jsonObject = (JSONObject)obj;
-            _mqttBroker = (String)jsonObject.get("broker");
-            _port = (long)jsonObject.get("port");
-            _username = (String)jsonObject.get("username");
-            _password = (String)jsonObject.get("password");
+            _clientID = (String)jsonObject.get(CONFIG_CLIENT_ID);
+            _mqttBroker = (String)jsonObject.get(CONFIG_BROKER);
+            _port = (long)jsonObject.get(CONFIG_PORT);
+            _username = (String)jsonObject.get(CONFIG_USERNAME);
+            _password = (String)jsonObject.get(CONFIG_PASSWORD);
+            _sysStatusTopic = (String)jsonObject.get(CONFIG_SYS_STATUS_TOPIC);
+            _sysControlTopic = (String)jsonObject.get(CONFIG_SYS_CONTROL_TOPIC);
+            _thingStatusTopicBase = (String)jsonObject.get(CONFIG_THING_STATUS_TOPIC_BASE);
+            _thingControlTopicBase = (String)jsonObject.get(CONFIG_THING_CONTROL_TOPIC_BASE);
         }
         catch (Exception ex) {
             logger.error("Failed to read config: " + ex.getMessage());
         }
     }
 
+    /**
+     * Saves configuration changes to the config file.
+     */
     public static void saveConfig() {
         JSONObject obj = new JSONObject();
-        obj.put("broker", _mqttBroker);
-        obj.put("port", _port);
-        obj.put("username", _username);
-        obj.put("password", _password);
+        obj.put(CONFIG_BROKER, _mqttBroker);
+        obj.put(CONFIG_PORT, _port);
+        obj.put(CONFIG_USERNAME, _username);
+        obj.put(CONFIG_PASSWORD, _password);
 
         try {
             try (FileWriter file = new FileWriter(_configFile.getAbsolutePath())) {
@@ -122,6 +171,11 @@ public final class Configuration {
         }
     }
 
+    /**
+     * Parses a thing from a thing descriptor file.
+     * @param thingFile The thing file.
+     * @return The thing that was parsed from the descriptor file.
+     */
     @Nullable
     private static Thing parseThingFromFile(@NotNull File thingFile) {
         JSONParser parser = new JSONParser();
@@ -129,17 +183,25 @@ public final class Configuration {
             Thing result = null;
             Object obj = parser.parse(new FileReader(thingFile.getAbsolutePath()));
             JSONObject jsonObject = (JSONObject)obj;
-            String name = (String)jsonObject.get("name");
-            String controlTopicName = (String)jsonObject.get("controlTopic");
-            String statusTopicName = (String)jsonObject.get("statusTopic");
-            boolean enabled = (boolean)jsonObject.get("enabled");
-            boolean readonly = (boolean)jsonObject.get("readonly");
+            String name = (String)jsonObject.get(THING_NAME);
+            String controlTopicName = (String)jsonObject.get(THING_CONTROL_TOPIC);
+            String statusTopicName = (String)jsonObject.get(THING_STATUS_TOPIC);
+            boolean enabled = (boolean)jsonObject.get(THING_ENABLED);
+            boolean readonly = (boolean)jsonObject.get(THING_READONLY);
+            int id = (int)(long)jsonObject.get(THING_ID);
 
-            int typeVal = (int)(long)jsonObject.get("type");
+            // What kind of thing is this?
+            int typeVal = (int)(long)jsonObject.get(THING_TYPE);
             ThingType type = ThingType.UNKNOWN.getType(typeVal);
             switch (type) {
                 case SWITCH:
+                    // Its a switch. So build a switch thing.
                     Switch newSwitch = new Switch() {
+                        @Override
+                        public void setThingID(int id) {
+                            super.setThingID(id);
+                        }
+
                         @Override
                         public void setName(String name) {
                             super.setName(name);
@@ -156,7 +218,7 @@ public final class Configuration {
                         }
 
                         @Override
-                        public void setEnabled(boolean enabled) {
+                        public void setEnabled(boolean enabled) throws ObjectDisposedException {
                             super.setEnabled(enabled);
                         }
 
@@ -166,6 +228,7 @@ public final class Configuration {
                         }
                     };
 
+                    newSwitch.setThingID(id);
                     newSwitch.setName(name);
                     newSwitch.setMqttControlTopic(controlTopicName);
                     newSwitch.setMqttStatusTopic(statusTopicName);
@@ -197,6 +260,9 @@ public final class Configuration {
         return null;
     }
 
+    /**
+     * Reloads the thing registry by reading all the thing descriptors from the thing directory.
+     */
     public static void reloadThingRegistry() {
         logger.info("Reading thing registry...");
         File[] files = _thingRegistry.listFiles((dir, name) -> name.endsWith(".thing"));
@@ -216,39 +282,140 @@ public final class Configuration {
         }
     }
 
+    /**
+     * Gets the MQTT client ID.
+     * @return The client ID.
+     */
+    public static String clientID() {
+        return _clientID;
+    }
+
+    /**
+     * Sets the MQTT client ID.
+     * @param clientID The client ID.
+     */
+    public static void setClientID(String clientID) {
+        _clientID = clientID;
+    }
+
+    /**
+     * Gets the MQTT broker host.
+     * @return The broker.
+     */
     public static String mqttBroker() {
         return _mqttBroker;
     }
 
+    /**
+     * Sets the MQTT broker host.
+     * @param broker The broker.
+     */
     public static void setMqttBroker(String broker) {
         _mqttBroker = broker;
     }
 
+    /**
+     * Gets the MQTT port.
+     * @return The port.
+     */
     public static long port() {
         return _port;
     }
 
+    /**
+     * Sets the MQTT port.
+     * @param port The port.
+     */
     public static void setPort(long port) {
         _port = port;
     }
 
+    /**
+     * Gets the MQTT username.
+     * @return The username.
+     */
     public static String username() {
         return _username;
     }
 
+    /**
+     * Sets the MQTT username.
+     * @param username The username.
+     */
     public static void setUsername(String username) {
         _username = username;
     }
 
+    /**
+     * Gets the MQTT password.
+     * @return The password.
+     */
     public static String password() {
         return _password;
     }
 
+    /**
+     * Sets the MQTT password.
+     * @param password The password.
+     */
     public static void setPassword(String password) {
         _password = password;
     }
 
+    /**
+     * Gets the thing registry, which is a list of things.
+     * @return The thing registry.
+     */
     public static List<Thing> getThingRegistry() {
         return _allThings;
+    }
+
+    /**
+     * Gets the system status MQTT topic.
+     * @return The system status topic.
+     */
+    public static String systemStatusTopic() {
+        return _sysStatusTopic;
+    }
+
+    /**
+     * Gets the system control MQTT topic.
+     * @return The control topic.
+     */
+    public static String systemControlTopic() {
+        return _sysControlTopic;
+    }
+
+    /**
+     * Gets the thing status topic base.
+     * @return The status topic base.
+     */
+    public static String thingStatusTopicBase() {
+        return _thingStatusTopicBase;
+    }
+
+    /**
+     * Gets the thing control topic base.
+     * @return The control topic.
+     */
+    public static String thingControlTopicBase() {
+        return _thingControlTopicBase;
+    }
+
+    /**
+     * Gets a thing from the thing registry by ID.
+     * @param thingID The thing ID.
+     * @return The thing with a matching ID or null if not found.
+     */
+    @Nullable
+    public static Thing getThingFromRegistry(int thingID) {
+        Thing result = null;
+        for (Thing theThing : _allThings) {
+            if (theThing.id() == thingID) {
+                result = theThing;
+                break;
+            }
+        }
+        return result;
     }
 }
