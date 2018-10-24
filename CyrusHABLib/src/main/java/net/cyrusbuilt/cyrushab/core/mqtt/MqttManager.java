@@ -20,7 +20,7 @@ public final class MqttManager {
     /**
      * Used to transfer info about an MQTT event.
      */
-    public class MqttEvent {
+    public static class MqttEvent {
         private String _topic = StringUtils.EMPTY;
         private String _message = StringUtils.EMPTY;
         private int _id = -1;
@@ -101,8 +101,12 @@ public final class MqttManager {
         public void deliveryComplete(IMqttDeliveryToken token) {
             try {
                 String topic = token.getTopics()[0];
-                String message = new String(token.getMessage().getPayload());
-                int id = token.getMessage().getId();
+                String message = "(unknown)";
+                if (token.getMessage() != null) {
+                    message = new String(token.getMessage().getPayload());
+                }
+
+                int id = token.getMessageId();
                 MqttEvent evt = new MqttEvent(topic, message, id);
                 notifyMessageDelivered(evt);
             }

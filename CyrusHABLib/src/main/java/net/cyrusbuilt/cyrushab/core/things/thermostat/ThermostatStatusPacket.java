@@ -1,9 +1,8 @@
-package net.cyrusbuilt.cyrushab.core.things.switches;
+package net.cyrusbuilt.cyrushab.core.things.thermostat;
 
 import net.cyrusbuilt.cyrushab.core.things.Thing;
-import net.cyrusbuilt.cyrushab.core.things.ThingType;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
-
+import net.cyrusbuilt.cyrushab.core.things.ThingType;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.jetbrains.annotations.Nullable;
@@ -14,13 +13,14 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 /**
- * Represents a Switch status packet for transmission over MQTT.
+ * Represents a thermostat status packet for transmission over MQTT.
  */
-public class SwitchStatusPacket {
+public class ThermostatStatusPacket {
     private int _id = -1;
     private String _name = StringUtils.EMPTY;
     private String _clientID = StringUtils.EMPTY;
-    private SwitchState _state = SwitchState.OFF;
+    private ThermostatState _state = ThermostatState.UNKNOWN;
+    private ThermostatMode _mode = ThermostatMode.OFF;
     private boolean _isEnabled = true;
     private boolean _isReadonly = false;
     private Timestamp _timestamp = null;
@@ -28,15 +28,15 @@ public class SwitchStatusPacket {
     /**
      * Default constructor.
      */
-    public SwitchStatusPacket() { }
+    public ThermostatStatusPacket() {}
 
     /**
-     * Constructs a new instance of {@link SwitchStatusPacket} with the ID, name, and client ID.
-     * @param id The "Thing" (device) ID.
-     * @param name The name of the Thing.
+     * Creates a new instance of {@link ThermostatStatusPacket} packet the id, name, and client ID.
+     * @param id The Thing ID.
+     * @param name The Thing name.
      * @param clientID The client ID. This should be the same as the system's client ID.
      */
-    public SwitchStatusPacket(int id, String name, String clientID) {
+    public ThermostatStatusPacket(int id, String name, String clientID) {
         _id = id;
         _name = name;
         _clientID = clientID;
@@ -91,19 +91,35 @@ public class SwitchStatusPacket {
     }
 
     /**
-     * Gets the Switch state. Default is {@link SwitchState#OFF}.
-     * @return The state of the Switch.
+     * Gets the current state.
+     * @return The current state.
      */
-    public SwitchState getState() {
+    public ThermostatState getState() {
         return _state;
     }
 
     /**
-     * Sets the state of the Switch.
-     * @param state The state of the Switch.
+     * Sets the current state.
+     * @param state The current state.
      */
-    public void setState(SwitchState state) {
+    public void setState(ThermostatState state) {
         _state = state;
+    }
+
+    /**
+     * Gets the current operating mode.
+     * @return The current mode.
+     */
+    public ThermostatMode getMode() {
+        return _mode;
+    }
+
+    /**
+     * Sets the operating mode.
+     * @param mode The mode.
+     */
+    public void setMode(ThermostatMode mode) {
+        _mode = mode;
     }
 
     /**
@@ -162,9 +178,10 @@ public class SwitchStatusPacket {
      * {
      *     "client_id": "some_id",
      *     "id": 1,
-     *     "name": "Living room light",
-     *     "state": 1,
-     *     "type": 2,
+     *     "name": "Main thermostat",
+     *     "state": 2,
+     *     "mode": 2,
+     *     "type": 1,
      *     "enabled": true,
      *     "readonly": false,
      *     "timestamp": "2018-10-17 15:14:51"
@@ -183,6 +200,7 @@ public class SwitchStatusPacket {
 
         int state = _state.getValue();
         int type = ThingType.SWITCH.getValue();
+        int mode = _mode.getValue();
         Timestamp tstamp = _timestamp;
         if (tstamp == null) {
             tstamp = Timestamp.valueOf(LocalDateTime.now());
@@ -190,9 +208,10 @@ public class SwitchStatusPacket {
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(Thing.THING_CLIENT_ID, clientID);
-        jsonObject.put(Thing.THING_ID, _id);
         jsonObject.put(Thing.THING_NAME, name);
+        jsonObject.put(Thing.THING_ID, _id);
         jsonObject.put(Thing.THING_STATE, state);
+        jsonObject.put(Thermostat.THERMOSTAT_MODE, mode);
         jsonObject.put(Thing.THING_TYPE, type);
         jsonObject.put(Thing.THING_ENABLED, _isEnabled);
         jsonObject.put(Thing.THING_READONLY, _isReadonly);
@@ -201,17 +220,17 @@ public class SwitchStatusPacket {
     }
 
     /**
-     * Builder class for {@link SwitchStatusPacket} objects. Allows easier control over all the flags, as well as help
-     * constructing a typical packet. If any of the flags are not set, a default value will be used.
+     * Builder class for {@link ThermostatStatusPacket} objects. Allows easier control over all the flags, as well as
+     * help constructing a typical packet. If any of the flags are not set, a default value will be used.
      */
     public static class Builder {
-        private SwitchStatusPacket _packet;
+        private ThermostatStatusPacket _packet;
 
         /**
          * Constructs a new instance of {@link Builder}.
          */
         public Builder() {
-            _packet = new SwitchStatusPacket();
+            _packet = new ThermostatStatusPacket();
         }
 
         /**
@@ -233,8 +252,8 @@ public class SwitchStatusPacket {
         }
 
         /**
-         * Sets the Switch name.
-         * @param name The name of the Switch.
+         * Sets the thermostat name.
+         * @param name The name of the thermostat.
          */
         public Builder setName(String name) {
             _packet.setName(name);
@@ -242,16 +261,25 @@ public class SwitchStatusPacket {
         }
 
         /**
-         * Sets the state of the Switch.
-         * @param state The Switch state.
+         * Sets the state of the thermostat.
+         * @param state The state.
          */
-        public Builder setState(SwitchState state) {
+        public Builder setState(ThermostatState state) {
             _packet.setState(state);
             return this;
         }
 
         /**
-         * Sets whether or not the Switch is enabled.
+         * Sets the operating mode of the thermostat.
+         * @param mode The operating mode.
+         */
+        public Builder setMode(ThermostatMode mode) {
+            _packet.setMode(mode);
+            return this;
+        }
+
+        /**
+         * Sets whether or not the thermostat is enabled.
          * @param enabled Set true to enable.
          */
         public Builder setEnabled(boolean enabled) {
@@ -260,7 +288,7 @@ public class SwitchStatusPacket {
         }
 
         /**
-         * Sets whether or not the Switch is read-only.
+         * Sets whether or not the thermostat is read-only.
          * @param readonly Set true if read-only.
          */
         public Builder setReadonly(boolean readonly) {
@@ -278,9 +306,9 @@ public class SwitchStatusPacket {
         }
 
         /**
-         * Combine all of the options that have been set and return a new {@link SwitchStatusPacket}.
+         * Combine all of the options that have been set and return a new {@link ThermostatStatusPacket}.
          */
-        public SwitchStatusPacket build() {
+        public ThermostatStatusPacket build() {
             if (StringUtils.isBlank(_packet.getClientID())) {
                 _packet.setClientID(MqttClient.generateClientId());
             }
@@ -298,14 +326,14 @@ public class SwitchStatusPacket {
     }
 
     /**
-     * Parses a {@link SwitchStatusPacket} from the specified JSON string.
+     * Parses a {@link ThermostatStatusPacket} from the specified JSON string.
      * @param jsonString The JSON string to parse.
-     * @return null if the specified string is null or empty. Otherwise, a new {@link SwitchStatusPacket} populated with
-     * the values retrieved from the JSON object structure.
+     * @return null if the specified string is null or empty. Otherwise, a new {@link ThermostatStatusPacket} populated
+     * with the values retrieved from the JSON object structure.
      * @throws ThingParseException if parsing the specified JSON string failed (ie. invalid format).
      */
     @Nullable
-    public static SwitchStatusPacket fromJsonString(String jsonString) throws ThingParseException {
+    public static ThermostatStatusPacket fromJsonString(String jsonString) throws ThingParseException {
         if (StringUtils.isBlank(jsonString)) {
             return null;
         }
@@ -315,24 +343,26 @@ public class SwitchStatusPacket {
             Object obj = parser.parse(jsonString);
             JSONObject jsonObject = (JSONObject)obj;
             ThingType type = ThingType.UNKNOWN.getType((int)(long)jsonObject.get(Thing.THING_TYPE));
-            if (type != ThingType.SWITCH) {
-                // This isn't a switch.
-                throw new ThingParseException("The specified JSON is not for a Switch type.");
+            if (type != ThingType.THERMOSTAT) {
+                // This isn't a thermostat.
+                throw new ThingParseException("The specified JSON is not for a Thermostat type.");
             }
 
             String clientID = (String)jsonObject.get(Thing.THING_CLIENT_ID);
             int id = (int)(long)jsonObject.get(Thing.THING_ID);
             String name = (String)jsonObject.get(Thing.THING_NAME);
-            SwitchState state = SwitchState.OFF.getType((int)(long)jsonObject.get(Thing.THING_STATE));
+            ThermostatState state = ThermostatState.UNKNOWN.getType((int)(long)jsonObject.get(Thing.THING_STATE));
+            ThermostatMode mode = ThermostatMode.OFF.getType((int)(long)jsonObject.get(Thermostat.THERMOSTAT_MODE));
             boolean isEnabled = (boolean)jsonObject.get(Thing.THING_ENABLED);
             boolean isReadonly = (boolean)jsonObject.get(Thing.THING_READONLY);
             Timestamp tstamp = Timestamp.valueOf((String)jsonObject.get(Thing.THING_TIMESTAMP));
 
             return new Builder()
                     .setClientID(clientID)
-                    .setID(id)
                     .setName(name)
+                    .setID(id)
                     .setState(state)
+                    .setMode(mode)
                     .setEnabled(isEnabled)
                     .setReadonly(isReadonly)
                     .setTimestamp(tstamp)

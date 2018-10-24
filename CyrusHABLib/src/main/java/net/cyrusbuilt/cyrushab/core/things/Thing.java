@@ -97,30 +97,6 @@ public interface Thing extends Disposable {
     ThingType type();
 
     /**
-     * Gets the MQTT control topic for this device instance.
-     * @return The MQTT control topic.
-     */
-    String getMqttControlTopic();
-
-    /**
-     * Sets the MQTT control topic for this device.
-     * @param topicName The control topic path/name.
-     */
-    void setMqttControlTopic(String topicName);
-
-    /**
-     * Gets the MQTT status topic for this device.
-     * @return The status topic path/name.
-     */
-    String getMqttStatusTopic();
-
-    /**
-     * Sets the MQTT status topic for this device.
-     * @param topicName The status topic path/name.
-     */
-    void setMqttStatusTopic(String topicName);
-
-    /**
      * Gets whether this device is readonly (not controllable, but can get status).
      * @return true if read-only; Otherwise, false.
      */

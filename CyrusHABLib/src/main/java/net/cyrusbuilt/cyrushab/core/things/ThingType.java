@@ -12,7 +12,7 @@ public enum ThingType implements Valueable<ThingType, Integer> {
     THERMOSTAT(1),
 
     /**
-     * The Thing is a switch.
+     * The Thing is a switch or relay.
      */
     SWITCH(2),
 
@@ -25,6 +25,21 @@ public enum ThingType implements Valueable<ThingType, Integer> {
      * The Thing is a motion sensor.
      */
     MOTION_SENSOR(4),
+
+    /**
+     * The Thing is a door lock.
+     */
+    DOOR_LOCK(5),
+
+    /**
+     * The Thing is garage door.
+     */
+    GARAGE_DOOR(6),
+
+    /**
+     * The thing in question is actually the controller system itself.
+     */
+    SYSTEM(7),
 
     /**
      * The Thing type is unknown.

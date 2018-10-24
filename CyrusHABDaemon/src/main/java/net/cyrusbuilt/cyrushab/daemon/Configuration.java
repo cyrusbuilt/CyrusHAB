@@ -35,15 +35,9 @@ public final class Configuration {
     private static final String CONFIG_PASSWORD = "password";
     private static final String CONFIG_SYS_STATUS_TOPIC = "hab_status_topic";
     private static final String CONFIG_SYS_CONTROL_TOPIC = "hab_control_topic";
-    private static final String CONFIG_THING_STATUS_TOPIC_BASE = "cyrushab/thing/status";
-    private static final String CONFIG_THING_CONTROL_TOPIC_BASE = "cyrushab/thing/control";
-    private static final String THING_NAME = "name";
-    private static final String THING_CONTROL_TOPIC = "control_topic";
-    private static final String THING_STATUS_TOPIC = "status_topic";
-    private static final String THING_ENABLED = "enabled";
-    private static final String THING_READONLY = "readonly";
-    private static final String THING_ID = "id";
-    private static final String THING_TYPE = "type";
+    private static final String CONFIG_THING_STATUS_TOPIC_BASE = "thing_status_topic_base";
+    private static final String CONFIG_THING_CONTROL_TOPIC_BASE = "thing_control_topic_base";
+    private static final String CONFIG_APP_TOPIC = "app_topic";
 
     private static File _configFile = null;
     private static File _thingRegistry = null;
@@ -56,6 +50,7 @@ public final class Configuration {
     private static String _sysControlTopic = StringUtils.EMPTY;
     private static String _thingStatusTopicBase = StringUtils.EMPTY;
     private static String _thingControlTopicBase = StringUtils.EMPTY;
+    private static String _appTopic = StringUtils.EMPTY;
     private static List<Thing> _allThings = null;
 
     /**
@@ -145,6 +140,7 @@ public final class Configuration {
             _sysControlTopic = (String)jsonObject.get(CONFIG_SYS_CONTROL_TOPIC);
             _thingStatusTopicBase = (String)jsonObject.get(CONFIG_THING_STATUS_TOPIC_BASE);
             _thingControlTopicBase = (String)jsonObject.get(CONFIG_THING_CONTROL_TOPIC_BASE);
+            _appTopic = (String)jsonObject.get(CONFIG_APP_TOPIC);
         }
         catch (Exception ex) {
             logger.error("Failed to read config: " + ex.getMessage());
@@ -183,15 +179,13 @@ public final class Configuration {
             Thing result = null;
             Object obj = parser.parse(new FileReader(thingFile.getAbsolutePath()));
             JSONObject jsonObject = (JSONObject)obj;
-            String name = (String)jsonObject.get(THING_NAME);
-            String controlTopicName = (String)jsonObject.get(THING_CONTROL_TOPIC);
-            String statusTopicName = (String)jsonObject.get(THING_STATUS_TOPIC);
-            boolean enabled = (boolean)jsonObject.get(THING_ENABLED);
-            boolean readonly = (boolean)jsonObject.get(THING_READONLY);
-            int id = (int)(long)jsonObject.get(THING_ID);
+            String name = (String)jsonObject.get(Thing.THING_NAME);
+            boolean enabled = (boolean)jsonObject.get(Thing.THING_ENABLED);
+            boolean readonly = (boolean)jsonObject.get(Thing.THING_READONLY);
+            int id = (int)(long)jsonObject.get(Thing.THING_ID);
 
             // What kind of thing is this?
-            int typeVal = (int)(long)jsonObject.get(THING_TYPE);
+            int typeVal = (int)(long)jsonObject.get(Thing.THING_TYPE);
             ThingType type = ThingType.UNKNOWN.getType(typeVal);
             switch (type) {
                 case SWITCH:
@@ -208,16 +202,6 @@ public final class Configuration {
                         }
 
                         @Override
-                        public void setMqttControlTopic(String topicName) {
-                            super.setMqttControlTopic(topicName);
-                        }
-
-                        @Override
-                        public void setMqttStatusTopic(String topicName) {
-                            super.setMqttStatusTopic(topicName);
-                        }
-
-                        @Override
                         public void setEnabled(boolean enabled) throws ObjectDisposedException {
                             super.setEnabled(enabled);
                         }
@@ -230,8 +214,6 @@ public final class Configuration {
 
                     newSwitch.setThingID(id);
                     newSwitch.setName(name);
-                    newSwitch.setMqttControlTopic(controlTopicName);
-                    newSwitch.setMqttStatusTopic(statusTopicName);
                     newSwitch.setEnabled(enabled);
                     newSwitch.setIsReadonly(readonly);
                     result = newSwitch;
@@ -400,6 +382,14 @@ public final class Configuration {
      */
     public static String thingControlTopicBase() {
         return _thingControlTopicBase;
+    }
+
+    /**
+     * Gets the topic for application messages.
+     * @return The application topic.
+     */
+    public static String applicationTopic() {
+        return _appTopic;
     }
 
     /**

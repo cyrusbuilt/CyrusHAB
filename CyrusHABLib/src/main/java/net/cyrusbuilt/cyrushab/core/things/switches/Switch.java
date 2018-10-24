@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An abstraction of a switch/button or a device that can be switched on/off.
+ * An abstraction of a switch/button or relay or a device that can be switched on/off.
  */
 public abstract class Switch implements Thing {
     /**
@@ -76,8 +76,6 @@ public abstract class Switch implements Thing {
     private boolean _isDisposed = false;
     private volatile SwitchState _state = SwitchState.OFF;
     private List<OnSwitchStateChangeListener> _listeners;
-    private String _mqttControlTopic = StringUtils.EMPTY;
-    private String _mqttStatusTopic = StringUtils.EMPTY;
     private boolean _isReadonly = true;
     private boolean _enabled = true;
     private int _id = -1;
@@ -172,42 +170,6 @@ public abstract class Switch implements Thing {
 
     /**
      * (non-Javadoc)
-     * @see Thing#getMqttControlTopic()
-     */
-    @Override
-    public String getMqttControlTopic() {
-        return _mqttControlTopic;
-    }
-
-    /**
-     * (non-Javadoc)
-     * @see Thing#setMqttControlTopic(String)
-     */
-    @Override
-    public void setMqttControlTopic(String topicName) {
-        _mqttControlTopic = topicName;
-    }
-
-    /**
-     * (non-Javadoc)
-     * @see Thing#getMqttStatusTopic()
-     */
-    @Override
-    public String getMqttStatusTopic() {
-        return _mqttStatusTopic;
-    }
-
-    /**
-     * (non-Javadoc)
-     * @see Thing#setMqttStatusTopic(String)
-     */
-    @Override
-    public void setMqttStatusTopic(String topicName) {
-        _mqttStatusTopic = topicName;
-    }
-
-    /**
-     * (non-Javadoc)
      * @see Thing#isReadonly()
      */
     @Override
@@ -219,7 +181,7 @@ public abstract class Switch implements Thing {
      * Sets whether or not this device is read-only. A read-only device can get status but can't be controlled.
      * @param readonly Set true if read-only.
      */
-    protected void setIsReadonly(boolean readonly) {
+    public void setIsReadonly(boolean readonly) {
         _isReadonly = readonly;
     }
 
@@ -237,7 +199,7 @@ public abstract class Switch implements Thing {
      * @param enabled Set true to enable.
      * @throws ObjectDisposedException if this instance has been disposed.
      */
-    protected void setEnabled(boolean enabled) throws ObjectDisposedException {
+    public void setEnabled(boolean enabled) throws ObjectDisposedException {
         if (isDisposed()) {
             throw new ObjectDisposedException(Switch.class.getCanonicalName());
         }
@@ -292,8 +254,6 @@ public abstract class Switch implements Thing {
         _name = null;
         _tag = null;
         _state = SwitchState.OFF;
-        _mqttControlTopic = null;
-        _mqttStatusTopic = null;
         _enabled = false;
         _isReadonly = false;
         _isDisposed = true;

@@ -40,3 +40,7 @@ jar {
         attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
     }
 }
+
+task runServer(type :Exec) {
+    commandLine 'bash', '../run_daemon.sh'
+}

@@ -5,6 +5,7 @@ import net.cyrusbuilt.cyrushab.core.ObjectDisposedException;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,28 +23,31 @@ public abstract class Thermostat implements Thing {
      * A thermostat state change event.
      */
     public static class ThermostatEvent {
-        private String _name = StringUtils.EMPTY;
+        private int _id = -1;
         private ThermostatState _oldState = ThermostatState.UNKNOWN;
         private ThermostatState _newState = ThermostatState.UNKNOWN;
+        private ThermostatMode _mode = ThermostatMode.OFF;
 
         /**
-         * Constructs a new instance of {@link ThermostatEvent} with the name, previous state, and current state.
-         * @param name The name of the thermostat.
+         * Constructs a new instance of {@link ThermostatEvent} with the id, previous state, current state, and mode.
+         * @param id The Thing ID.
          * @param oldState The previous state.
          * @param newState The new (current) state.
+         * @param mode The thermostat mode.
          */
-        public ThermostatEvent(String name, ThermostatState oldState, ThermostatState newState) {
-            _name = name;
+        public ThermostatEvent(int id, ThermostatState oldState, ThermostatState newState, ThermostatMode mode) {
+            _id = id;
             _oldState = oldState;
             _newState = newState;
+            _mode = mode;
         }
 
         /**
-         * Gets the name of the thermostat.
-         * @return The name.
+         * Gets the Thing ID.
+         * @return The ID.
          */
-        public String getName() {
-            return _name;
+        public int getID() {
+            return _id;
         }
 
         /**
@@ -60,6 +64,14 @@ public abstract class Thermostat implements Thing {
          */
         public ThermostatState getNewState() {
             return _newState;
+        }
+
+        /**
+         * Gets the current thermostat mode.
+         * @return The operating mode.
+         */
+        public ThermostatMode getMode() {
+            return _mode;
         }
     }
 
@@ -80,8 +92,6 @@ public abstract class Thermostat implements Thing {
     private boolean _isDisposed = false;
     private volatile ThermostatState _state = ThermostatState.UNKNOWN;
     private List<OnThermostatStateChangeListener> _listeners;
-    private String _mqttControlTopic = StringUtils.EMPTY;
-    private String _mqttStatusTopic = StringUtils.EMPTY;
     private boolean _isReadonly = true;
     private boolean _enabled = true;
     private int _id = -1;
@@ -177,42 +187,6 @@ public abstract class Thermostat implements Thing {
 
     /**
      * (non-Javadoc)
-     * @see Thing#getMqttControlTopic()
-     */
-    @Override
-    public String getMqttControlTopic() {
-        return _mqttControlTopic;
-    }
-
-    /**
-     * (non-Javadoc)
-     * @see Thing#setMqttControlTopic(String)
-     */
-    @Override
-    public void setMqttControlTopic(String topicName) {
-        _mqttControlTopic = topicName;
-    }
-
-    /**
-     * (non-Javadoc)
-     * @see Thing#getMqttStatusTopic()
-     */
-    @Override
-    public String getMqttStatusTopic() {
-        return _mqttStatusTopic;
-    }
-
-    /**
-     * (non-Javadoc)
-     * @see Thing#setMqttStatusTopic(String)
-     */
-    @Override
-    public void setMqttStatusTopic(String topicName) {
-        _mqttStatusTopic = topicName;
-    }
-
-    /**
-     * (non-Javadoc)
      * @see Thing#isReadonly()
      */
     @Override
@@ -297,8 +271,6 @@ public abstract class Thermostat implements Thing {
         _tag = null;
         _state = ThermostatState.UNKNOWN;
         _mode = ThermostatMode.OFF;
-        _mqttControlTopic = null;
-        _mqttStatusTopic = null;
         _enabled = false;
         _isReadonly = false;
         _isDisposed = true;
@@ -319,24 +291,40 @@ public abstract class Thermostat implements Thing {
      */
     protected synchronized void setState(ThermostatState state) throws ObjectDisposedException {
         if (_state != state) {
-            notifyListeners(new ThermostatEvent(_name, _state, state));
+            notifyListeners(new ThermostatEvent(_id, _state, state, _mode));
             _state = state;
         }
     }
 
     /**
-     *
-     * @return
+     * Gets the current mode.
+     * @return The current operating mode.
      */
     public ThermostatMode mode() {
         return _mode;
     }
 
     /**
-     *
-     * @param mode
+     * Sets the operating mode.
+     * @param mode The operating mode.
+     * @throws ObjectDisposedException if this instance has been disposed.
      */
-    public void setMode(ThermostatMode mode) {
-        _mode = mode;
+    public void setMode(ThermostatMode mode) throws ObjectDisposedException {
+        if (_mode != mode) {
+            notifyListeners(new ThermostatEvent(_id, _state, _state, mode));
+            _mode = mode;
+        }
+    }
+
+    /**
+     * Maps pertinent state values from the specified status packet.
+     * @param packet The status packet.
+     * @throws ObjectDisposedException if this instance has been disposed.
+     */
+    public void mapFromStatusPacket(@NotNull ThermostatStatusPacket packet) throws ObjectDisposedException {
+        setEnabled(packet.isEnabled());
+        setIsReadonly(packet.isReadonly());
+        setMode(packet.getMode());
+        setState(packet.getState());
     }
 }

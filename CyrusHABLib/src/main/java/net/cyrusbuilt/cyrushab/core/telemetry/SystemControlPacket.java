@@ -1,6 +1,9 @@
 package net.cyrusbuilt.cyrushab.core.telemetry;
 
+import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
+
+import net.cyrusbuilt.cyrushab.core.things.ThingType;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.jetbrains.annotations.Nullable;
@@ -11,28 +14,44 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 /**
- * Represents a system status packet for transmission over MQTT.
+ * Represents a system control packet for transmission over MQTT.
  */
-public class SystemStatusPacket {
-    private SystemStatus _status = SystemStatus.UNKNOWN;
+public class SystemControlPacket {
+    private SystemCommand _command = SystemCommand.UNKNOWN;
     private String _clientID = StringUtils.EMPTY;
     private Timestamp _timestamp = null;
 
     /**
-     * Default private constructor only used by {@link Builder}.
+     * Constructs a new instance of {@link SystemControlPacket}.
      */
-    private SystemStatusPacket() { }
+    private SystemControlPacket() {}
 
     /**
-     * Constructs a new instance of {@link SystemStatusPacket} with the client ID, status, and timestamp.
-     * @param clientID The ID of the client.
-     * @param status The system status.
+     * Constructs a new instance of {@link SystemControlPacket} with the command, client ID, and timestamp.
+     * @param command The control command.
+     * @param clientID The client ID.
      * @param timestamp The timestamp.
      */
-    public SystemStatusPacket(String clientID, SystemStatus status, Timestamp timestamp) {
+    public SystemControlPacket(SystemCommand command, String clientID, Timestamp timestamp) {
+        _command = command;
         _clientID = clientID;
-        _status = status;
         _timestamp = timestamp;
+    }
+
+    /**
+     * Gets the control command.
+     * @return The command.
+     */
+    public SystemCommand getCommand() {
+        return _command;
+    }
+
+    /**
+     * Sets the control command.
+     * @param command The command.
+     */
+    private void setCommand(SystemCommand command) {
+        _command = command;
     }
 
     /**
@@ -44,27 +63,11 @@ public class SystemStatusPacket {
     }
 
     /**
-     * Sets the client ID. Only used by {@link Builder}.
+     * Sets the client ID.
      * @param clientID The client ID.
      */
     private void setClientID(String clientID) {
         _clientID = clientID;
-    }
-
-    /**
-     * Gets the system status.
-     * @return The status.
-     */
-    public SystemStatus getStatus() {
-        return _status;
-    }
-
-    /**
-     * Sets the system status. Only used by {@link Builder}.
-     * @param status The system status.
-     */
-    private void setStatus(SystemStatus status) {
-        _status = status;
     }
 
     /**
@@ -76,7 +79,7 @@ public class SystemStatusPacket {
     }
 
     /**
-     * Sets the timestamp. Only used by {@link Builder}.
+     * Sets the timestamp.
      * @param timestamp The timestamp.
      */
     private void setTimestamp(Timestamp timestamp) {
@@ -85,13 +88,13 @@ public class SystemStatusPacket {
 
     /**
      * Builds a JSON string representation of the packet data. If client ID was not specified, then one will be randomly
-     * generated. If the timestamp was not specified, then the current local date/time will be used. If status was not
-     * specified, then {@link SystemStatus#UNKNOWN} will be used.
+     * generated. If the timestamp was not specified, then the current local date/time will be used. If a command was
+     * not specified, then {@link SystemCommand#UNKNOWN} will be used.
      * @return The constructed JSON structure converted to string. Example:
      * {
-     *     "client_id": "some_client",
-     *     "status": 0,
-     *     "timestamp": "2018-10-17 10:36:43"
+     *     "client_id": "hab_daemon_1",
+     *     "command": 0,
+     *     "timestamp": "2018-10-24 15:34:42.31"
      * }
      */
     public String toJsonString() {
@@ -100,7 +103,7 @@ public class SystemStatusPacket {
             clientID = MqttClient.generateClientId();
         }
 
-        int status = _status.getValue();
+        int command = _command.getValue();
         Timestamp tstamp = _timestamp;
         if (tstamp == null) {
             tstamp = Timestamp.valueOf(LocalDateTime.now());
@@ -108,27 +111,27 @@ public class SystemStatusPacket {
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(HABSystem.SYS_CLIENT_ID, clientID);
-        jsonObject.put(HABSystem.SYS_STATUS, status);
+        jsonObject.put(HABSystem.SYS_COMMAND, command);
         jsonObject.put(HABSystem.SYS_TIMESTAMP, tstamp.toString());
         return jsonObject.toJSONString();
     }
 
     /**
-     * Builder class for {@link SystemStatusPacket} objects. Allows easier control over all the flags, as well as help
+     * Builder class for {@link SystemControlPacket} objects. Allows easier control over all the flags, as well as help
      * constructing a typical packet. If any of the flags are not set, a default value will be used.
      */
     public static class Builder {
-        private SystemStatusPacket _packet;
+        private SystemControlPacket _packet;
 
         /**
          * Constructs a new instance of {@link Builder}.
          */
         public Builder() {
-            _packet = new SystemStatusPacket();
+            _packet = new SystemControlPacket();
         }
 
         /**
-         * Sets the system's client ID. If null, an empty string, or not set, then a client ID will be generated.
+         * Sets the client ID.
          * @param clientID The client ID.
          */
         public Builder setClientID(String clientID) {
@@ -137,16 +140,16 @@ public class SystemStatusPacket {
         }
 
         /**
-         * Sets the system status. If not set, then {@link SystemStatus#UNKNOWN} will be used.
-         * @param status The system status.
+         * Sets the control command.
+         * @param command The command.
          */
-        public Builder setStatus(SystemStatus status) {
-            _packet.setStatus(status);
+        public Builder setCommand(SystemCommand command) {
+            _packet.setCommand(command);
             return this;
         }
 
         /**
-         * Sets the timestamp. If null or not specified, then the default of the current local date/time will be used.
+         * Sets the timestamp.
          * @param timestamp The timestamp.
          */
         public Builder setTimestamp(Timestamp timestamp) {
@@ -155,9 +158,9 @@ public class SystemStatusPacket {
         }
 
         /**
-         * Combine all of the options that have been set and return a new {@link SystemStatusPacket}.
+         * Combine all of the options that have been set and return a new {@link SystemControlPacket}.
          */
-        public SystemStatusPacket build() {
+        public SystemControlPacket build() {
             if (StringUtils.isBlank(_packet.getClientID())) {
                 _packet.setClientID(MqttClient.generateClientId());
             }
@@ -171,14 +174,14 @@ public class SystemStatusPacket {
     }
 
     /**
-     * Parses a {@link SystemStatusPacket} from the specified JSON string.
+     * Parses a {@link SystemControlPacket} from the specified JSON string.
      * @param jsonString The JSON string to parse.
-     * @return null if the specified string is null or empty. Otherwise, a new {@link SystemStatusPacket} populated with
-     *      * the values retrieved from the JSON object structure.
+     * @return null if the specified string is null or empty. Otherwise, a new {@link SystemControlPacket} populated
+     * with the values retrieved from the JSON object structure.
      * @throws ThingParseException if parsing the specified JSON string failed (ie. invalid format).
      */
     @Nullable
-    public static SystemStatusPacket fromJsonString(String jsonString) throws ThingParseException {
+    public static SystemControlPacket fromJsonString(String jsonString) throws ThingParseException {
         if (StringUtils.isBlank(jsonString)) {
             return null;
         }
@@ -187,13 +190,19 @@ public class SystemStatusPacket {
         try {
             Object obj = parser.parse(jsonString);
             JSONObject jsonObject = (JSONObject)obj;
+            ThingType type = ThingType.UNKNOWN.getType((int)(long)jsonObject.get(Thing.THING_TYPE));
+            if (type != ThingType.SYSTEM) {
+                // This is not a system control packet.
+                throw new ThingParseException("The specified JSON is not for a System type.");
+            }
+
             String clientID = (String)jsonObject.get(HABSystem.SYS_CLIENT_ID);
-            SystemStatus status = SystemStatus.NORMAL.getType((int)(long)jsonObject.get(HABSystem.SYS_STATUS));
+            SystemCommand command = SystemCommand.UNKNOWN.getType((int)(long)jsonObject.get(HABSystem.SYS_COMMAND));
             Timestamp tstamp = Timestamp.valueOf((String)jsonObject.get(HABSystem.SYS_TIMESTAMP));
 
-            return new SystemStatusPacket.Builder()
+            return new SystemControlPacket.Builder()
                     .setClientID(clientID)
-                    .setStatus(status)
+                    .setCommand(command)
                     .setTimestamp(tstamp)
                     .build();
         }

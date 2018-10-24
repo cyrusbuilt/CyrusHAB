@@ -29,7 +29,12 @@ public enum SystemStatus implements Valueable<SystemStatus, Integer> {
     /**
      * The system is disconnected from the MQTT broker.
      */
-    DISCONNECTED(4);
+    DISCONNECTED(4),
+
+    /**
+     * The system is shutting down.
+     */
+    SHUTDOWN(5);
 
     private int value;
 

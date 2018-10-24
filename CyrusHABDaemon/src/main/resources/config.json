@@ -6,6 +6,7 @@
   "password": "",
   "hab_status_topic": "cyrushab/system/status",
   "hab_control_topic": "cyrushab/system/control",
-  "hab_thing_status_topic_base": "cyrushab/thing/status",
-  "hab_thing_control_topic_base": "cyrushab/thing/control"
+  "thing_status_topic_base": "cyrushab/thing/status",
+  "thing_control_topic_base": "cyrushab/thing/control",
+  "app_topic": "cyrushab/application"
 }
