@@ -1,4 +1,5 @@
 apply plugin: 'idea'
+apply plugin: 'java'
 apply plugin: 'java-library'
 
 buildscript {
@@ -31,11 +32,18 @@ version = '0.1.0'
 
 javadoc {
     source = sourceSets.main.allJava
-    classpath = configurations.compile
 }
 
 jar {
     manifest {
         attributes('Implementation-Tile': project.name, 'Implementation-Version': project.version)
+    }
+}
+
+test {
+    useJUnit()
+    maxHeapSize = '1G'
+    filter {
+        includeTestsMatching "*Test"
     }
 }

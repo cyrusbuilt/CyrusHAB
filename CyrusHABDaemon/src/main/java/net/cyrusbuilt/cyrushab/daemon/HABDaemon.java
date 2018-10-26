@@ -203,6 +203,12 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
             return;
         }
 
+        // NOTE: The enable and readonly flags should be handled between the client app and the client device.
+        // We are essentially a middle-man, so it isn't our place to handle that stuff here. If the app requests the
+        // to control the device, then the device should send back an error if it is disabled or read-only. The app
+        // should also already be aware of the device's state and shouldn't attempt to control it without first
+        // enabling it.
+
         logger.info("Thermostat mode: " + packet.getMode().name());
         logger.info("Thermostat enable: " + packet.isEnabled());
         logger.info("Thermostat readonly: " + packet.isReadonly());

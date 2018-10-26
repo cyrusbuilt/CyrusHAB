@@ -1,6 +1,7 @@
 package net.cyrusbuilt.cyrushab.core.telemetry;
 
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.jetbrains.annotations.Nullable;

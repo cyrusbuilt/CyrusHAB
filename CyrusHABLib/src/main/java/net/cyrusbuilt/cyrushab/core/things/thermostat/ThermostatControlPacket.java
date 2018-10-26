@@ -1,6 +1,5 @@
 package net.cyrusbuilt.cyrushab.core.things.thermostat;
 
-import net.cyrusbuilt.cyrushab.core.telemetry.HABSystem;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
@@ -15,7 +14,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 /**
- *
+ * Represents a thermostat control packet for transmission over MQTT.
  */
 public class ThermostatControlPacket {
     private int _id = -1;
@@ -27,109 +26,122 @@ public class ThermostatControlPacket {
     private Timestamp _timestamp;
 
     /**
-     *
+     * Constructs a new instance of {@link ThermostatControlPacket}.
      */
     public ThermostatControlPacket() {}
 
     /**
-     *
-     * @return
+     * Gets the Thing ID of the thermostat.
+     * @return The ID.
      */
     public int getID() {
         return _id;
     }
 
     /**
-     *
-     * @param id
+     * Sets the Thing ID of the thermostat.
+     * @param id The ID.
      */
     public void setID(int id) {
         _id = id;
     }
 
     /**
-     *
-     * @return
+     * Gets the client ID of the thermostat.
+     * @return The client ID.
      */
     public String getClientID() {
         return _clientID;
     }
 
     /**
-     *
-     * @param clientID
+     * Sets the client ID of the thermostat.
+     * @param clientID The client ID.
      */
     public void setClientID(String clientID) {
         _clientID = clientID;
     }
 
     /**
-     *
-     * @return
+     * Gets the thermostat mode.
+     * @return The mode.
      */
     public ThermostatMode getMode() {
         return _mode;
     }
 
     /**
-     *
-     * @param mode
+     * Sets the thermostat mode.
+     * @param mode The mode.
      */
     public void setMode(ThermostatMode mode) {
         _mode = mode;
     }
 
     /**
-     *
-     * @return
+     * Gets whether or not the thermostat is enabled.
+     * @return true if enabled; Otherwise, false.
      */
     public boolean isEnabled() {
         return _isEnabled;
     }
 
     /**
-     *
-     * @param enabled
+     * Enables/disables the thermostat.
+     * @param enabled Set true to enable.
      */
     public void setEnabled(boolean enabled) {
         _isEnabled = enabled;
     }
 
     /**
-     *
-     * @return
+     * Gets whether or not the thermostat is read-only.
+     * @return true if read-only; Otherwise, false.
      */
     public boolean isReadonly() {
         return _isReadonly;
     }
 
     /**
-     *
-     * @param readonly
+     * Sets whether or not the device is read-only.
+     * @param readonly Set true to make read-only.
      */
     public void setReadonly(boolean readonly) {
         _isReadonly = readonly;
     }
 
     /**
-     *
-     * @return
+     * Gets the timestamp of the control packet.
+     * @return The timestamp.
      */
     public Timestamp getTimestamp() {
         return _timestamp;
     }
 
     /**
-     *
-     * @param timestamp
+     * Sets the timestamp of the control packet.
+     * @param timestamp The timestamp.
      */
     public void setTimestamp(Timestamp timestamp) {
         _timestamp = timestamp;
     }
 
     /**
-     *
-     * @return
+     * Builds a JSON string representation of the packet data. If client ID was not specified, then one will be randomly
+     * generated. If the timestamp was not specified, then the current local date/time will be used. If a name was not
+     * specified, then "(None)" will be used. All other values will be default unless set otherwise.
+     * @return The constructed JSON structure converted to string. Example:
+     * {
+     *     "id": 1
+     *     "client_id": "thermostat_1",
+     *     "name": "Main thermostat",
+     *     "state": 1,
+     *     "mode": 1,
+     *     "type": 1,
+     *     "enabled": true,
+     *     "readonly": false,
+     *     "timestamp": "2018-10-28 12:56:23.41"
+     * }
      */
     public String toJsonString() {
         String clientID = _clientID;
@@ -149,6 +161,7 @@ public class ThermostatControlPacket {
         jsonObject.put(Thing.THING_ID, _id);
         jsonObject.put(Thing.THING_CLIENT_ID, clientID);
         jsonObject.put(Thing.THING_TYPE, type);
+        jsonObject.put(Thing.THING_STATE, state);
         jsonObject.put(Thermostat.THERMOSTAT_MODE, mode);
         jsonObject.put(Thing.THING_ENABLED, _isEnabled);
         jsonObject.put(Thing.THING_READONLY, _isReadonly);
@@ -157,21 +170,22 @@ public class ThermostatControlPacket {
     }
 
     /**
-     *
+     * Builder class for {@link ThermostatControlPacket} objects. Allows easier control over all the flags, as well as
+     * help constructing a typical packet. If any of the flags are not set, a default value will be used.
      */
     public static class Builder {
         private ThermostatControlPacket _packet;
 
         /**
-         *
+         * Constructs a new instance of {@link Builder}.
          */
         public Builder() {
             _packet = new ThermostatControlPacket();
         }
 
         /**
-         *
-         * @param id
+         * Sets the Thing ID.
+         * @param id The ID.
          */
         public Builder setThingID(int id) {
             _packet.setID(id);
@@ -179,8 +193,8 @@ public class ThermostatControlPacket {
         }
 
         /**
-         *
-         * @param clientID
+         * Sets the client ID.
+         * @param clientID The client ID.
          */
         public Builder setClientID(String clientID) {
             _packet.setClientID(clientID);
@@ -188,8 +202,8 @@ public class ThermostatControlPacket {
         }
 
         /**
-         *
-         * @param mode
+         * Sets the mode.
+         * @param mode The mode.
          */
         public Builder setMode(ThermostatMode mode) {
             _packet.setMode(mode);
@@ -197,8 +211,8 @@ public class ThermostatControlPacket {
         }
 
         /**
-         *
-         * @param enabled
+         * Sets whether or not the thermostat is enabled.
+         * @param enabled Set true if enabled.
          */
         public Builder setEnabled(boolean enabled) {
             _packet.setEnabled(enabled);
@@ -206,8 +220,8 @@ public class ThermostatControlPacket {
         }
 
         /**
-         *
-         * @param readonly
+         * Sets whether or not the thermostat is read-only.
+         * @param readonly Set true if read-only.
          */
         public Builder setReadonly(boolean readonly) {
             _packet.setReadonly(readonly);
@@ -215,8 +229,8 @@ public class ThermostatControlPacket {
         }
 
         /**
-         *
-         * @param timestamp
+         * Sets the timestamp.
+         * @param timestamp The timestamp.
          */
         public Builder setTimestamp(Timestamp timestamp) {
             _packet.setTimestamp(timestamp);
@@ -224,7 +238,7 @@ public class ThermostatControlPacket {
         }
 
         /**
-         *
+         * Combine all of the options that have been set and return a new {@link ThermostatControlPacket}.
          */
         public ThermostatControlPacket build() {
             if (StringUtils.isBlank(_packet.getClientID())) {
@@ -240,10 +254,11 @@ public class ThermostatControlPacket {
     }
 
     /**
-     *
-     * @param jsonString
-     * @return
-     * @throws ThingParseException
+     * Parses a {@link ThermostatControlPacket} from the specified JSON string.
+     * @param jsonString The JSON string to parse.
+     * @return null if the specified string is null or empty. Otherwise, a new {@link ThermostatControlPacket} populated
+     * with the values retrieved from the JSON object structure.
+     * @throws ThingParseException if parsing the specified JSON string failed (ie. invalid format).
      */
     @Nullable
     public static ThermostatControlPacket fromJsonString(String jsonString) throws ThingParseException {
@@ -261,13 +276,15 @@ public class ThermostatControlPacket {
                 throw new ThingParseException("The specified JSON is not for a Thermostat type.");
             }
 
+            int id = (int)(long)jsonObject.get(Thing.THING_ID);
             String clientID = (String)jsonObject.get(Thing.THING_CLIENT_ID);
             ThermostatMode mode = ThermostatMode.OFF.getType((int)(long)jsonObject.get(Thermostat.THERMOSTAT_MODE));
             boolean enable = (boolean)jsonObject.get(Thing.THING_ENABLED);
             boolean readonly = (boolean)jsonObject.get(Thing.THING_READONLY);
-            Timestamp tstamp = Timestamp.valueOf((String)jsonObject.get(HABSystem.SYS_TIMESTAMP));
+            Timestamp tstamp = Timestamp.valueOf((String)jsonObject.get(Thing.THING_TIMESTAMP));
 
             return new Builder()
+                    .setThingID(id)
                     .setClientID(clientID)
                     .setMode(mode)
                     .setEnabled(enable)

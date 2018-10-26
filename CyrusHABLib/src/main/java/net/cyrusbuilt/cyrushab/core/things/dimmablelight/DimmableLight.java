@@ -15,6 +15,21 @@ import java.util.List;
  */
 public abstract class DimmableLight implements Thing {
     /**
+     * The key name for the dimmable light level attribute.
+     */
+    public static final String DIMMABLE_LEVEL = "level";
+
+    /**
+     * The key name for the dimmable ligh max level attribute.
+     */
+    public static final String DIMMABLE_MAX_LEVEL = "max_level";
+
+    /**
+     * The key name for the dimmable light min level attribute.
+     */
+    public static final String DIMMABLE_MIN_LEVEL = "min_level";
+
+    /**
      * A dimmable light state change event.
      */
     public static class DimmableEvent {
@@ -111,18 +126,26 @@ public abstract class DimmableLight implements Thing {
 
     /**
      * Creates a new instance of {@link DimmableLight} (default constructor).
+     * @param minLevel The minimum light level.
+     * @param maxLevel The maximum light level.
      */
-    protected DimmableLight() {
+    protected DimmableLight(int minLevel, int maxLevel) {
         _listeners = new ArrayList<>();
+        _minLevel = minLevel;
+        _maxLevel = maxLevel;
     }
 
     /**
      * Creates a new instance of {@link DimmableLight} with the device name.
      * @param name The device name.
+     * @param minLevel The minimum light level.
+     * @param maxLevel The maximum light level.
      */
-    protected DimmableLight(String name) {
+    protected DimmableLight(String name, int minLevel, int maxLevel) {
         _listeners = new ArrayList<>();
         _name = name;
+        _minLevel = minLevel;
+        _maxLevel = maxLevel;
     }
 
     /**
@@ -379,5 +402,18 @@ public abstract class DimmableLight implements Thing {
         int maxVal = Math.max(minLevel(), maxLevel());
         int range = (maxVal - minVal);
         return (level * 100) / range;
+    }
+
+    /**
+     *
+     * @param packet
+     * @throws ObjectDisposedException
+     */
+    public void mapFromStatusPacket(DimmableLightStatusPacket packet) throws ObjectDisposedException {
+        setLevel(packet.getLevel());
+        _minLevel = packet.getMinLevel();
+        _maxLevel = packet.getMaxLevel();
+        setEnabled(packet.isEnabled());
+        setIsReadonly(packet.isReadonly());
     }
 }

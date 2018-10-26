@@ -2,8 +2,8 @@ package net.cyrusbuilt.cyrushab.core.telemetry;
 
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
-
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
+
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.jetbrains.annotations.Nullable;

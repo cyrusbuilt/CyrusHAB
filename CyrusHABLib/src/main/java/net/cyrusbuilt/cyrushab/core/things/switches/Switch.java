@@ -294,4 +294,15 @@ public abstract class Switch implements Thing {
     public boolean isOff() {
         return _state == SwitchState.OFF;
     }
+
+    /**
+     * Maps pertinent state values from the specified status packet.
+     * @param packet The status packet.
+     * @throws ObjectDisposedException if this instance has been disposed.
+     */
+    public void mapFromStatusPacket(@NotNull SwitchStatusPacket packet) throws ObjectDisposedException {
+        setEnabled(packet.isEnabled());
+        setIsReadonly(packet.isReadonly());
+        setState(packet.getState());
+    }
 }
