@@ -114,6 +114,7 @@ public abstract class DimmableLight implements Thing {
 
     private static final Object _lock = new Object();
     private String _name = StringUtils.EMPTY;
+    private String _clientID = StringUtils.EMPTY;
     private Object _tag = null;
     private boolean _isDisposed = false;
     private boolean _isReadonly = true;
@@ -164,6 +165,24 @@ public abstract class DimmableLight implements Thing {
     @Override
     public void setThingID(int id) {
         _id = id;
+    }
+
+    /**
+     * (non-Javadoc)
+     * @see Thing#clientID()
+     */
+    @Override
+    public String clientID() {
+        return _clientID;
+    }
+
+    /**
+     * (non-Javadoc)
+     * @see Thing#setClientID(String)
+     */
+    @Override
+    public void setClientID(String clientID) {
+        _clientID = clientID;
     }
 
     /**
@@ -233,7 +252,7 @@ public abstract class DimmableLight implements Thing {
      * Sets whether or not this device is read-only. A read-only device can get status but can't be controlled.
      * @param readonly Set true if read-only.
      */
-    protected void setIsReadonly(boolean readonly) {
+    public void setIsReadonly(boolean readonly) {
         _isReadonly = readonly;
     }
 
@@ -327,7 +346,7 @@ public abstract class DimmableLight implements Thing {
      * @param enabled Set true to enable.
      * @throws ObjectDisposedException if this instance has been disposed.
      */
-    protected void setEnabled(boolean enabled) throws ObjectDisposedException {
+    public void setEnabled(boolean enabled) throws ObjectDisposedException {
         if (isDisposed()) {
             throw new ObjectDisposedException(DimmableLight.class.getCanonicalName());
         }
@@ -405,9 +424,9 @@ public abstract class DimmableLight implements Thing {
     }
 
     /**
-     *
-     * @param packet
-     * @throws ObjectDisposedException
+     * Maps the pertinent values from the specified status packet.
+     * @param packet The status packet to map values from.
+     * @throws ObjectDisposedException if this instance has been disposed.
      */
     public void mapFromStatusPacket(DimmableLightStatusPacket packet) throws ObjectDisposedException {
         setLevel(packet.getLevel());

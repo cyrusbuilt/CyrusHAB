@@ -46,8 +46,7 @@ if [ ! -d "${TARGET}/${PROJECT_NAME}-${PROJECT_VERSION}" ]; then
     exit 1
 fi
 
-# Copy launcher script to bin and set executable.
-cp -v "${SCRIPT_DIR}/${PROJECT_NAME}/src/main/scripts/hab_daemon_launcher.sh" "${TARGET}/${PROJECT_NAME}-${PROJECT_VERSION}/bin/"
+# Make sure launcher script is executable.
 LAUNCHER="${TARGET}/${PROJECT_NAME}-${PROJECT_VERSION}/bin/hab_daemon_launcher.sh"
 chmod -v +rx ${LAUNCHER}
 

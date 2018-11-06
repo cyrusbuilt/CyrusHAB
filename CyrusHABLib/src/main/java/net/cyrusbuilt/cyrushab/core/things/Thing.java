@@ -78,6 +78,18 @@ public interface Thing extends Disposable {
     void setThingID(int id);
 
     /**
+     * Get the client ID.
+     * @return The client ID.
+     */
+    String clientID();
+
+    /**
+     * Set the client ID.
+     * @param clientID The client ID.
+     */
+    void setClientID(String clientID);
+
+    /**
      * Gets the object this instance is tagged with.
      * @return The object instance this instance is tagged with.
      */

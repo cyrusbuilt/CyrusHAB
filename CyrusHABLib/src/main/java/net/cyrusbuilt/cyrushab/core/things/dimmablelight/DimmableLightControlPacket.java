@@ -1,9 +1,9 @@
-package net.cyrusbuilt.cyrushab.core.things.switches;
+package net.cyrusbuilt.cyrushab.core.things.dimmablelight;
 
 import net.cyrusbuilt.cyrushab.core.things.Packet;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
-import net.cyrusbuilt.cyrushab.core.things.ThingType;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
+import net.cyrusbuilt.cyrushab.core.things.ThingType;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -15,39 +15,28 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 /**
- * Represents a Switch status packet for transmission over MQTT.
+ * Represents a Dimmable Light control packet for transmission over MQTT.
  */
-public class SwitchStatusPacket implements Packet {
+public class DimmableLightControlPacket implements Packet {
     private int _id = -1;
-    private String _name = StringUtils.EMPTY;
     private String _clientID = StringUtils.EMPTY;
-    private SwitchState _state = SwitchState.OFF;
-    private boolean _isEnabled = true;
-    private boolean _isReadonly = false;
-    private Timestamp _timestamp = null;
+    private int _level = 0;
+    private int _minLevel = 0;
+    private int _maxLevel = 255;
+    private boolean _enabled = false;
+    private boolean _readonly = false;
+    private Timestamp _timestamp;
 
     /**
-     * Default constructor.
+     * Constructs a new instance of {@link DimmableLightControlPacket}.
      */
-    public SwitchStatusPacket() { }
-
-    /**
-     * Constructs a new instance of {@link SwitchStatusPacket} with the ID, name, and client ID.
-     * @param id The "Thing" (device) ID.
-     * @param name The name of the Thing.
-     * @param clientID The client ID. This should be the same as the system's client ID.
-     */
-    public SwitchStatusPacket(int id, String name, String clientID) {
-        _id = id;
-        _name = name;
-        _clientID = clientID;
-    }
+    public DimmableLightControlPacket() {}
 
     /**
      * Gets the Thing ID.
      * @return The ID.
      */
-    public int getID() {
+    public int getThingID() {
         return _id;
     }
 
@@ -55,24 +44,8 @@ public class SwitchStatusPacket implements Packet {
      * Sets the Thing ID.
      * @param id The ID.
      */
-    public void setID(int id) {
+    public void setThingID(int id) {
         _id = id;
-    }
-
-    /**
-     * Gets the name of the Switch.
-     * @return The name.
-     */
-    public String getName() {
-        return _name;
-    }
-
-    /**
-     * Sets the name of the Switch.
-     * @param name The name.
-     */
-    public void setName(String name) {
-        _name = name;
     }
 
     /**
@@ -94,51 +67,83 @@ public class SwitchStatusPacket implements Packet {
     }
 
     /**
-     * Gets the Switch state. Default is {@link SwitchState#OFF}.
-     * @return The state of the Switch.
+     * Gets the light level.
+     * @return The light level.
      */
-    public SwitchState getState() {
-        return _state;
+    public int getLevel() {
+        return _level;
     }
 
     /**
-     * Sets the state of the Switch.
-     * @param state The state of the Switch.
+     * Sets the light level.
+     * @param level The light level.
      */
-    public void setState(SwitchState state) {
-        _state = state;
+    public void setLevel(int level) {
+        _level = level;
     }
 
     /**
-     * Gets whether or not the Switch is enabled.
+     * Gets the minimum light level.
+     * @return The minimum level.
+     */
+    public int getMinLevel() {
+        return _minLevel;
+    }
+
+    /**
+     * Sets the minimum light level.
+     * @param minLevel The minimum level.
+     */
+    public void setMinLevel(int minLevel) {
+        _minLevel = minLevel;
+    }
+
+    /**
+     * Gets the maximum light level.
+     * @return The maximum level.
+     */
+    public int getMaxLevel() {
+        return _maxLevel;
+    }
+
+    /**
+     * Sets the maximum light level.
+     * @param maxLevel The maximum level.
+     */
+    public void setMaxLevel(int maxLevel) {
+        _maxLevel = maxLevel;
+    }
+
+    /**
+     * Gets whether the light is enabled.
      * @return true if enabled; Otherwise, false.
      */
     public boolean isEnabled() {
-        return _isEnabled;
+        return _enabled;
     }
 
     /**
-     * Sets whether or not the Switch is enabled.
+     * Sets whether the light is enabled.
      * @param enabled Set true to enable.
      */
     public void setEnabled(boolean enabled) {
-        _isEnabled = enabled;
+        _enabled = enabled;
     }
 
     /**
-     * Gets whether or not the Switch is read-only.
+     * Gets whether the light is read-only.
      * @return true if read-only; Otherwise, false.
      */
     public boolean isReadonly() {
-        return _isReadonly;
+        return _readonly;
     }
 
     /**
-     * Sets whether the Switch is read-only.
+     * Sets whether the light is read-only.
      * @param readonly Set true if read-only.
      */
     public void setReadonly(boolean readonly) {
-        _isReadonly = readonly;
+        _readonly = readonly;
     }
 
     /**
@@ -161,18 +166,19 @@ public class SwitchStatusPacket implements Packet {
 
     /**
      * Builds a JSON string representation of the packet data. If client ID was not specified, then one will be randomly
-     * generated. If the timestamp was not specified, then the current local date/time will be used. If a name was not
-     * specified, then "(None)" will be used. All other values will be default unless set otherwise.
+     * generated. If the timestamp was not specified, then the current local date/time will be used. All other values
+     * will be default unless set otherwise.
      * @return The constructed JSON structure converted to string. Example:
      * {
-     *     "client_id": "some_id",
      *     "id": 1,
-     *     "name": "Living room light",
-     *     "state": 1,
-     *     "type": 2,
+     *     "client_id": "dimmable_light_1",
+     *     "type": 3,
+     *     "level": 100,
+     *     "min_level": 0,
+     *     "max_level": 255,
      *     "enabled": true,
      *     "readonly": false,
-     *     "timestamp": "2018-10-17 15:14:51"
+     *     "timestamp": "2018-11-01 09:38:47.55"
      * }
      */
     @Override
@@ -182,46 +188,50 @@ public class SwitchStatusPacket implements Packet {
             clientID = MqttClient.generateClientId();
         }
 
-        String name = _name;
-        if (StringUtils.isBlank(name)) {
-            name = "(None)";
-        }
-
-        int state = _state.getValue();
-        int type = ThingType.SWITCH.getValue();
+        int type = ThingType.DIMMABLE_LIGHT.getValue();
         Timestamp tstamp = _timestamp;
         if (tstamp == null) {
             tstamp = Timestamp.valueOf(LocalDateTime.now());
         }
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put(Thing.THING_CLIENT_ID, clientID);
         jsonObject.put(Thing.THING_ID, _id);
-        jsonObject.put(Thing.THING_NAME, name);
-        jsonObject.put(Thing.THING_STATE, state);
+        jsonObject.put(Thing.THING_CLIENT_ID, clientID);
         jsonObject.put(Thing.THING_TYPE, type);
-        jsonObject.put(Thing.THING_ENABLED, _isEnabled);
-        jsonObject.put(Thing.THING_READONLY, _isReadonly);
+        jsonObject.put(DimmableLight.DIMMABLE_LEVEL, _level);
+        jsonObject.put(DimmableLight.DIMMABLE_MIN_LEVEL, _minLevel);
+        jsonObject.put(DimmableLight.DIMMABLE_MAX_LEVEL, _maxLevel);
+        jsonObject.put(Thing.THING_ENABLED, _enabled);
+        jsonObject.put(Thing.THING_READONLY, _readonly);
         jsonObject.put(Thing.THING_TIMESTAMP, tstamp.toString());
         return jsonObject.toJSONString();
     }
 
     /**
-     * Builder class for {@link SwitchStatusPacket} objects. Allows easier control over all the flags, as well as help
-     * constructing a typical packet. If any of the flags are not set, a default value will be used.
+     * Builder class for {@link DimmableLightControlPacket} objects. Allows easier control over all the flags, as well
+     * as help constructing a typical packet. If any of the flags are not set, a default value will be used.
      */
-    public static class Builder implements Packet.Builder<SwitchStatusPacket> {
-        private SwitchStatusPacket _packet;
+    public static class Builder implements Packet.Builder<DimmableLightControlPacket> {
+        private DimmableLightControlPacket _packet;
 
         /**
          * Constructs a new instance of {@link Builder}.
          */
         public Builder() {
-            _packet = new SwitchStatusPacket();
+            _packet = new DimmableLightControlPacket();
         }
 
         /**
-         * Sets the client ID. Should be the same as the system's client ID.
+         * Sets the Thing ID.
+         * @param id The ID.
+         */
+        public Builder setThingID(int id) {
+            _packet.setThingID(id);
+            return this;
+        }
+
+        /**
+         * Sets the client ID.
          * @param clientID The client ID.
          */
         public Builder setClientID(String clientID) {
@@ -230,34 +240,34 @@ public class SwitchStatusPacket implements Packet {
         }
 
         /**
-         * Sets the Thing ID.
-         * @param id The ID.
+         * Sets the light level.
+         * @param level The light level.
          */
-        public Builder setID(int id) {
-            _packet.setID(id);
+        public Builder setLevel(int level) {
+            _packet.setLevel(level);
             return this;
         }
 
         /**
-         * Sets the Switch name.
-         * @param name The name of the Switch.
+         * Sets the minimum light level.
+         * @param minLevel The minimum level.
          */
-        public Builder setName(String name) {
-            _packet.setName(name);
+        public Builder setMinLevel(int minLevel) {
+            _packet.setMinLevel(minLevel);
             return this;
         }
 
         /**
-         * Sets the state of the Switch.
-         * @param state The Switch state.
+         * Sets the maximum light level.
+         * @param maxLevel The maximum level.
          */
-        public Builder setState(SwitchState state) {
-            _packet.setState(state);
+        public Builder setMaxLevel(int maxLevel) {
+            _packet.setMaxLevel(maxLevel);
             return this;
         }
 
         /**
-         * Sets whether or not the Switch is enabled.
+         * Enables/disables the light.
          * @param enabled Set true to enable.
          */
         public Builder setEnabled(boolean enabled) {
@@ -266,8 +276,8 @@ public class SwitchStatusPacket implements Packet {
         }
 
         /**
-         * Sets whether or not the Switch is read-only.
-         * @param readonly Set true if read-only.
+         * Sets whether or not the light is read-only.
+         * @param readonly Set true to be read-only.
          */
         public Builder setReadonly(boolean readonly) {
             _packet.setReadonly(readonly);
@@ -285,16 +295,12 @@ public class SwitchStatusPacket implements Packet {
         }
 
         /**
-         * Combine all of the options that have been set and return a new {@link SwitchStatusPacket}.
+         * Combine all of the options that have been set and return a new {@link DimmableLightControlPacket}.
          */
         @Override
-        public SwitchStatusPacket build() {
+        public DimmableLightControlPacket build() {
             if (StringUtils.isBlank(_packet.getClientID())) {
                 _packet.setClientID(MqttClient.generateClientId());
-            }
-
-            if (StringUtils.isBlank(_packet.getName())) {
-                _packet.setName("(None)");
             }
 
             if (_packet.getTimestamp() == null) {
@@ -306,14 +312,14 @@ public class SwitchStatusPacket implements Packet {
     }
 
     /**
-     * Parses a {@link SwitchStatusPacket} from the specified JSON string.
+     * Parses a {@link DimmableLightControlPacket} from the specified JSON string.
      * @param jsonString The JSON string to parse.
-     * @return null if the specified string is null or empty. Otherwise, a new {@link SwitchStatusPacket} populated with
-     * the values retrieved from the JSON object structure.
+     * @return null if the specified string is null or empty. Otherwise, a new {@link DimmableLightControlPacket}
+     * populated with the values retrieved from the JSON object structure.
      * @throws ThingParseException if parsing the specified JSON string failed (ie. invalid format).
      */
     @Nullable
-    public static SwitchStatusPacket fromJsonString(String jsonString) throws ThingParseException {
+    public static DimmableLightControlPacket fromJsonString(String jsonString) throws ThingParseException {
         if (StringUtils.isBlank(jsonString)) {
             return null;
         }
@@ -323,26 +329,27 @@ public class SwitchStatusPacket implements Packet {
             Object obj = parser.parse(jsonString);
             JSONObject jsonObject = (JSONObject)obj;
             ThingType type = ThingType.UNKNOWN.getType((int)(long)jsonObject.get(Thing.THING_TYPE));
-            if (type != ThingType.SWITCH) {
-                // This isn't a switch.
+            if (type != ThingType.DIMMABLE_LIGHT) {
                 throw new ThingParseException("The specified JSON is not for a Switch type.");
             }
 
-            String clientID = (String)jsonObject.get(Thing.THING_CLIENT_ID);
             int id = (int)(long)jsonObject.get(Thing.THING_ID);
-            String name = (String)jsonObject.get(Thing.THING_NAME);
-            SwitchState state = SwitchState.OFF.getType((int)(long)jsonObject.get(Thing.THING_STATE));
-            boolean isEnabled = (boolean)jsonObject.get(Thing.THING_ENABLED);
-            boolean isReadonly = (boolean)jsonObject.get(Thing.THING_READONLY);
+            String clientID = (String)jsonObject.get(Thing.THING_CLIENT_ID);
+            int level = (int)(long)jsonObject.get(DimmableLight.DIMMABLE_LEVEL);
+            int minLevel = (int)(long)jsonObject.get(DimmableLight.DIMMABLE_MIN_LEVEL);
+            int maxLevel = (int)(long)jsonObject.get(DimmableLight.DIMMABLE_MAX_LEVEL);
+            boolean enable = (boolean)jsonObject.get(Thing.THING_ENABLED);
+            boolean readonly = (boolean)jsonObject.get(Thing.THING_READONLY);
             Timestamp tstamp = Timestamp.valueOf((String)jsonObject.get(Thing.THING_TIMESTAMP));
 
             return new Builder()
+                    .setThingID(id)
                     .setClientID(clientID)
-                    .setID(id)
-                    .setName(name)
-                    .setState(state)
-                    .setEnabled(isEnabled)
-                    .setReadonly(isReadonly)
+                    .setLevel(level)
+                    .setMinLevel(minLevel)
+                    .setMaxLevel(maxLevel)
+                    .setEnabled(enable)
+                    .setReadonly(readonly)
                     .setTimestamp(tstamp)
                     .build();
         }

@@ -1,11 +1,10 @@
-package net.cyrusbuilt.cyrushab.core.things.thermostat;
+package net.cyrusbuilt.cyrushab.core.things.door;
 
 import net.cyrusbuilt.cyrushab.core.things.Packet;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
 
-import net.cyrusbuilt.cyrushab.core.things.switches.SwitchControlPacket;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.jetbrains.annotations.Nullable;
@@ -16,35 +15,35 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 /**
- * Represents a thermostat control packet for transmission over MQTT.
+ * Represents a Door control packet for transmission over MQTT.
  */
-public class ThermostatControlPacket implements Packet {
+public class DoorControlPacket implements Packet {
     private int _id = -1;
     private String _clientID = StringUtils.EMPTY;
-    private ThermostatState _state = ThermostatState.UNKNOWN;
-    private ThermostatMode _mode = ThermostatMode.OFF;
-    private boolean _isEnabled = false;
-    private boolean _isReadonly = false;
+    private DoorCommand _command = DoorCommand.UNKNOWN;
+    private boolean _enabled = false;
+    private boolean _readonly = false;
+    private boolean _lockEnabled = false;
     private Timestamp _timestamp;
 
     /**
-     * Constructs a new instance of {@link ThermostatControlPacket}.
+     * Construct a new instance of {@link DoorControlPacket}.
      */
-    public ThermostatControlPacket() {}
+    public DoorControlPacket() {}
 
     /**
-     * Gets the Thing ID of the thermostat.
+     * Gets the Thing ID.
      * @return The ID.
      */
-    public int getID() {
+    public int getThingID() {
         return _id;
     }
 
     /**
-     * Sets the Thing ID of the thermostat.
+     * Sets the Thing ID.
      * @param id The ID.
      */
-    public void setID(int id) {
+    public void setThingID(int id) {
         _id = id;
     }
 
@@ -67,57 +66,74 @@ public class ThermostatControlPacket implements Packet {
     }
 
     /**
-     * Gets the thermostat mode.
-     * @return The mode.
+     * Gets the door command.
+     * @return The door command.
      */
-    public ThermostatMode getMode() {
-        return _mode;
+    public DoorCommand getCommand() {
+        return _command;
     }
 
     /**
-     * Sets the thermostat mode.
-     * @param mode The mode.
+     * Sets the door command.
+     * @param command The door command.
      */
-    public void setMode(ThermostatMode mode) {
-        _mode = mode;
+    public void setCommand(DoorCommand command) {
+        _command = command;
     }
 
     /**
-     * Gets whether or not the thermostat is enabled.
+     * Gets whether the door lock is enabled.
+     * @return true if the door lock is enabled; Otherwise, false.
+     */
+    public boolean isLockEnabled() {
+        return _lockEnabled;
+    }
+
+    /**
+     * Enable the door lock.
+     * @param enable Set true if the lock is enabled.
+     */
+    public void enableLock(boolean enable) {
+        _lockEnabled = enable;
+    }
+
+    /**
+     * Gets whether the light is enabled.
      * @return true if enabled; Otherwise, false.
      */
     public boolean isEnabled() {
-        return _isEnabled;
+        return _enabled;
     }
 
     /**
-     * Enables/disables the thermostat.
+     * Sets whether the light is enabled.
      * @param enabled Set true to enable.
      */
     public void setEnabled(boolean enabled) {
-        _isEnabled = enabled;
+        _enabled = enabled;
     }
 
     /**
-     * Gets whether or not the thermostat is read-only.
+     * Gets whether the light is read-only.
      * @return true if read-only; Otherwise, false.
      */
     public boolean isReadonly() {
-        return _isReadonly;
+        return _readonly;
     }
 
     /**
-     * Sets whether or not the device is read-only.
-     * @param readonly Set true to make read-only.
+     * Sets whether the light is read-only.
+     * @param readonly Set true if read-only.
      */
     public void setReadonly(boolean readonly) {
-        _isReadonly = readonly;
+        _readonly = readonly;
     }
 
     /**
      * (non-Javadoc)
      * @see Packet#getTimestamp()
      */
+    @Override
     public Timestamp getTimestamp() {
         return _timestamp;
     }
@@ -133,19 +149,18 @@ public class ThermostatControlPacket implements Packet {
 
     /**
      * Builds a JSON string representation of the packet data. If client ID was not specified, then one will be randomly
-     * generated. If the timestamp was not specified, then the current local date/time will be used. If a name was not
-     * specified, then "(None)" will be used. All other values will be default unless set otherwise.
+     * generated. If the timestamp was not specified, then the current local date/time will be used. All other values
+     * will be default unless set otherwise.
      * @return The constructed JSON structure converted to string. Example:
      * {
-     *     "id": 1
-     *     "client_id": "thermostat_1",
-     *     "name": "Main thermostat",
-     *     "state": 1,
-     *     "mode": 1,
-     *     "type": 1,
+     *     "id": 5,
+     *     "client_id": "door_1",
+     *     "command": 1,
+     *     "lock_enabled": false,
+     *     "type": 5,
+     *     "readonly", false,
      *     "enabled": true,
-     *     "readonly": false,
-     *     "timestamp": "2018-10-28 12:56:23.41"
+     *     "timestamp": "2018-11-02 14:53.27.18"
      * }
      */
     @Override
@@ -155,9 +170,8 @@ public class ThermostatControlPacket implements Packet {
             clientID = MqttClient.generateClientId();
         }
 
-        int state = _state.getValue();
-        int mode = _mode.getValue();
-        int type = ThingType.THERMOSTAT.getValue();
+        int type = ThingType.DOOR.getValue();
+        int command = _command.getValue();
         Timestamp tstamp = _timestamp;
         if (tstamp == null) {
             tstamp = Timestamp.valueOf(LocalDateTime.now());
@@ -166,27 +180,27 @@ public class ThermostatControlPacket implements Packet {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(Thing.THING_ID, _id);
         jsonObject.put(Thing.THING_CLIENT_ID, clientID);
+        jsonObject.put(Door.DOOR_COMMAND, command);
+        jsonObject.put(Door.DOOR_LOCK_ENABLED, _lockEnabled);
         jsonObject.put(Thing.THING_TYPE, type);
-        jsonObject.put(Thing.THING_STATE, state);
-        jsonObject.put(Thermostat.THERMOSTAT_MODE, mode);
-        jsonObject.put(Thing.THING_ENABLED, _isEnabled);
-        jsonObject.put(Thing.THING_READONLY, _isReadonly);
-        jsonObject.put(Thing.THING_TIMESTAMP, tstamp.toString());
+        jsonObject.put(Thing.THING_READONLY, _readonly);
+        jsonObject.put(Thing.THING_ENABLED, _enabled);
+        jsonObject.put(Thing.THING_TIMESTAMP, tstamp);
         return jsonObject.toJSONString();
     }
 
     /**
-     * Builder class for {@link ThermostatControlPacket} objects. Allows easier control over all the flags, as well as
-     * help constructing a typical packet. If any of the flags are not set, a default value will be used.
+     * A builder class for {@link DoorControlPacket} objects. Allows easier control over all the flags, as well
+     * as help constructing a typical packet. If any of the flags are not set, a default value will be used.
      */
-    public static class Builder implements Packet.Builder<ThermostatControlPacket> {
-        private ThermostatControlPacket _packet;
+    public static class Builder implements Packet.Builder<DoorControlPacket> {
+        private DoorControlPacket _packet;
 
         /**
          * Constructs a new instance of {@link Builder}.
          */
         public Builder() {
-            _packet = new ThermostatControlPacket();
+            _packet = new DoorControlPacket();
         }
 
         /**
@@ -194,7 +208,7 @@ public class ThermostatControlPacket implements Packet {
          * @param id The ID.
          */
         public Builder setThingID(int id) {
-            _packet.setID(id);
+            _packet.setThingID(id);
             return this;
         }
 
@@ -208,29 +222,38 @@ public class ThermostatControlPacket implements Packet {
         }
 
         /**
-         * Sets the mode.
-         * @param mode The mode.
+         * Sets the door command.
+         * @param command The door command.
          */
-        public Builder setMode(ThermostatMode mode) {
-            _packet.setMode(mode);
+        public Builder setCommand(DoorCommand command) {
+            _packet.setCommand(command);
             return this;
         }
 
         /**
-         * Sets whether or not the thermostat is enabled.
-         * @param enabled Set true if enabled.
+         * Sets whether the door lock should be enabled.
+         * @param enable Set true if enabled.
          */
-        public Builder setEnabled(boolean enabled) {
-            _packet.setEnabled(enabled);
+        public Builder setLockEnabled(boolean enable) {
+            _packet.enableLock(enable);
             return this;
         }
 
         /**
-         * Sets whether or not the thermostat is read-only.
+         * Sets whether the door is read-only.
          * @param readonly Set true if read-only.
          */
         public Builder setReadonly(boolean readonly) {
             _packet.setReadonly(readonly);
+            return this;
+        }
+
+        /**
+         * Sets whether the door is enabled.
+         * @param enabled Set true if enabled.
+         */
+        public Builder setEnabled(boolean enabled) {
+            _packet.setEnabled(enabled);
             return this;
         }
 
@@ -245,10 +268,10 @@ public class ThermostatControlPacket implements Packet {
         }
 
         /**
-         * Combine all of the options that have been set and return a new {@link ThermostatControlPacket}.
+         * Combine all of the options that have been set and return a new {@link DoorControlPacket}.
          */
         @Override
-        public ThermostatControlPacket build() {
+        public DoorControlPacket build() {
             if (StringUtils.isBlank(_packet.getClientID())) {
                 _packet.setClientID(MqttClient.generateClientId());
             }
@@ -262,14 +285,14 @@ public class ThermostatControlPacket implements Packet {
     }
 
     /**
-     * Parses a {@link ThermostatControlPacket} from the specified JSON string.
+     * Parses a {@link DoorControlPacket} from the specified JSON string.
      * @param jsonString The JSON string to parse.
-     * @return null if the specified string is null or empty. Otherwise, a new {@link ThermostatControlPacket} populated
-     * with the values retrieved from the JSON object structure.
+     * @return null if the specified string is null or empty. Otherwise, a new {@link DoorControlPacket} populated with
+     * the values retrieved from the JSON object structure.
      * @throws ThingParseException if parsing the specified JSON string failed (ie. invalid format).
      */
     @Nullable
-    public static ThermostatControlPacket fromJsonString(String jsonString) throws ThingParseException {
+    public static DoorControlPacket fromJsonString(String jsonString) throws ThingParseException {
         if (StringUtils.isBlank(jsonString)) {
             return null;
         }
@@ -279,24 +302,26 @@ public class ThermostatControlPacket implements Packet {
             Object obj = parser.parse(jsonString);
             JSONObject jsonObject = (JSONObject)obj;
             ThingType type = ThingType.UNKNOWN.getType((int)(long)jsonObject.get(Thing.THING_TYPE));
-            if (type != ThingType.THERMOSTAT) {
-                // This is not a thermostat control packet.
-                throw new ThingParseException("The specified JSON is not for a Thermostat type.");
+            if (type != ThingType.DOOR) {
+                // This is not a door control packet.
+                throw new ThingParseException("The specified JSON is not for a Door type.");
             }
 
             int id = (int)(long)jsonObject.get(Thing.THING_ID);
             String clientID = (String)jsonObject.get(Thing.THING_CLIENT_ID);
-            ThermostatMode mode = ThermostatMode.OFF.getType((int)(long)jsonObject.get(Thermostat.THERMOSTAT_MODE));
+            DoorCommand command = DoorCommand.UNKNOWN.getType((int)(long)jsonObject.get(Door.DOOR_COMMAND));
             boolean enable = (boolean)jsonObject.get(Thing.THING_ENABLED);
             boolean readonly = (boolean)jsonObject.get(Thing.THING_READONLY);
+            boolean lockenable = (boolean)jsonObject.get(Door.DOOR_LOCK_ENABLED);
             Timestamp tstamp = Timestamp.valueOf((String)jsonObject.get(Thing.THING_TIMESTAMP));
 
-            return new Builder()
+            return new DoorControlPacket.Builder()
                     .setThingID(id)
                     .setClientID(clientID)
-                    .setMode(mode)
+                    .setCommand(command)
                     .setEnabled(enable)
                     .setReadonly(readonly)
+                    .setLockEnabled(lockenable)
                     .setTimestamp(tstamp)
                     .build();
         }

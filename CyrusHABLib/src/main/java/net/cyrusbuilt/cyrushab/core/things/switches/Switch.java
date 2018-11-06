@@ -72,6 +72,7 @@ public abstract class Switch implements Thing {
     }
 
     private String _name = StringUtils.EMPTY;
+    private String _clientID = StringUtils.EMPTY;
     private Object _tag = null;
     private boolean _isDisposed = false;
     private volatile SwitchState _state = SwitchState.OFF;
@@ -112,6 +113,24 @@ public abstract class Switch implements Thing {
     @Override
     public void setThingID(int id) {
         _id = id;
+    }
+
+    /**
+     * (non-Javadoc)
+     * @see Thing#clientID()
+     */
+    @Override
+    public String clientID() {
+        return _clientID;
+    }
+
+    /**
+     * (non-Javadoc)
+     * @see Thing#setClientID(String)
+     */
+    @Override
+    public void setClientID(String clientID) {
+        _clientID = clientID;
     }
 
     /**

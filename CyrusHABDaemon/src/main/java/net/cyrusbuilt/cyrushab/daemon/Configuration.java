@@ -1,11 +1,12 @@
 package net.cyrusbuilt.cyrushab.daemon;
 
-
-import net.cyrusbuilt.cyrushab.core.ObjectDisposedException;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
+import net.cyrusbuilt.cyrushab.core.things.dimmablelight.DimmableLight;
+import net.cyrusbuilt.cyrushab.core.things.door.Door;
 import net.cyrusbuilt.cyrushab.core.things.switches.Switch;
 
+import net.cyrusbuilt.cyrushab.core.things.thermostat.Thermostat;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,11 +23,6 @@ import java.util.List;
  * Global configuration manager.
  */
 public final class Configuration {
-    /**
-     * This is a static class, thus a private constructor.
-     */
-    private Configuration() {}
-
     private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
     private static final String CONFIG_CLIENT_ID = "client_id";
     private static final String CONFIG_BROKER = "broker";
@@ -52,6 +48,11 @@ public final class Configuration {
     private static String _thingControlTopicBase = StringUtils.EMPTY;
     private static String _appTopic = StringUtils.EMPTY;
     private static List<Thing> _allThings = null;
+
+    /**
+     * This is a static class, thus a private constructor.
+     */
+    private Configuration() {}
 
     /**
      * Initialize the configuration. This will attempt to read the local config file. If not found, then the default
@@ -180,6 +181,7 @@ public final class Configuration {
             Object obj = parser.parse(new FileReader(thingFile.getAbsolutePath()));
             JSONObject jsonObject = (JSONObject)obj;
             String name = (String)jsonObject.get(Thing.THING_NAME);
+            String clientID = (String)jsonObject.get(Thing.THING_CLIENT_ID);
             boolean enabled = (boolean)jsonObject.get(Thing.THING_ENABLED);
             boolean readonly = (boolean)jsonObject.get(Thing.THING_READONLY);
             int id = (int)(long)jsonObject.get(Thing.THING_ID);
@@ -190,28 +192,9 @@ public final class Configuration {
             switch (type) {
                 case SWITCH:
                     // Its a switch. So build a switch thing.
-                    Switch newSwitch = new Switch() {
-                        @Override
-                        public void setThingID(int id) {
-                            super.setThingID(id);
-                        }
+                    Switch newSwitch = new Switch() {};
 
-                        @Override
-                        public void setName(String name) {
-                            super.setName(name);
-                        }
-
-                        @Override
-                        public void setEnabled(boolean enabled) throws ObjectDisposedException {
-                            super.setEnabled(enabled);
-                        }
-
-                        @Override
-                        public void setIsReadonly(boolean readonly) {
-                            super.setIsReadonly(readonly);
-                        }
-                    };
-
+                    newSwitch.setClientID(clientID);
                     newSwitch.setThingID(id);
                     newSwitch.setName(name);
                     newSwitch.setEnabled(enabled);
@@ -219,13 +202,50 @@ public final class Configuration {
                     result = newSwitch;
                     break;
                 case THERMOSTAT:
-                    // TODO load thermostat
+                    Thermostat tstat = new Thermostat() {};
+
+                    tstat.setClientID(clientID);
+                    tstat.setThingID(id);
+                    tstat.setName(name);
+                    tstat.setEnabled(enabled);
+                    tstat.setIsReadonly(readonly);
+                    result = tstat;
                     break;
                 case MOTION_SENSOR:
                     // TODO load motion sensor
                     break;
                 case DIMMABLE_LIGHT:
-                    // TODO load dimmable light
+                    int minLevel = 0;
+                    Object result1 = jsonObject.get(DimmableLight.DIMMABLE_MIN_LEVEL);
+                    if (result1 != null) {
+                        minLevel = (int)(long)result1;
+                    }
+
+                    int maxLevel = 255;
+                    Object result2 = jsonObject.get(DimmableLight.DIMMABLE_MAX_LEVEL);
+                    if (result2 != null) {
+                        maxLevel = (int)(long)result2;
+                    }
+
+                    DimmableLight dl = new DimmableLight(minLevel, maxLevel) {};
+                    dl.setClientID(clientID);
+                    dl.setThingID(id);
+                    dl.setName(name);
+                    dl.setEnabled(enabled);
+                    dl.setIsReadonly(readonly);
+                    result = dl;
+                    break;
+                case DOOR:
+                    Door newDoor = new Door() { };
+                    newDoor.setClientID(clientID);
+                    newDoor.setThingID(id);
+                    newDoor.setName(name);
+                    newDoor.setEnabled(enabled);
+                    newDoor.setIsReadonly(readonly);
+                    result = newDoor;
+                    break;
+                case GARAGE_DOOR:
+
                     break;
                 case UNKNOWN:
                     // TODO what to do here?

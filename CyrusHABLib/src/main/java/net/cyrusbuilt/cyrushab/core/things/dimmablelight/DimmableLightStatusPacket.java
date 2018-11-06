@@ -1,5 +1,6 @@
 package net.cyrusbuilt.cyrushab.core.things.dimmablelight;
 
+import net.cyrusbuilt.cyrushab.core.things.Packet;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 /**
  * Represents a Dimmable light status packet for transmission over MQTT.
  */
-public class DimmableLightStatusPacket {
+public class DimmableLightStatusPacket implements Packet {
    private int _id = -1;
    private String _clientID = StringUtils.EMPTY;
    private int _level = 0;
@@ -48,121 +49,139 @@ public class DimmableLightStatusPacket {
    }
 
     /**
-     * Gets the client ID.
-     * @return The client ID.
+     * (non-Javadoc)
+     * @see Packet#getClientID()
      */
+    @Override
    public String getClientID() {
        return _clientID;
    }
 
     /**
-     * Sets the client ID.
-     * @param clientID The client ID.
+     * (non-Javadoc)
+     * @see Packet#setClientID(String)
      */
+    @Override
    public void setClientID(String clientID) {
        _clientID = clientID;
    }
 
     /**
-     *
-     * @return
+     * Gets the current light level.
+     * @return The light level.
      */
    public int getLevel() {
        return _level;
    }
 
     /**
-     *
-     * @param level
+     * Sets the light level.
+     * @param level The light level.
      */
    public void setLevel(int level) {
        _level = level;
    }
 
     /**
-     *
-     * @return
+     * Gets the minimum level.
+     * @return The minimum level.
      */
    public int getMinLevel() {
        return _minLevel;
    }
 
     /**
-     *
-     * @param minLevel
+     * Sets the minimum light level.
+     * @param minLevel The minimum level.
      */
    public void setMinLevel(int minLevel) {
        _minLevel = minLevel;
    }
 
     /**
-     *
-     * @return
+     * Gets the maximum light level.
+     * @return The maximum level.
      */
    public int getMaxLevel() {
        return _maxLevel;
    }
 
     /**
-     *
-     * @param maxLevel
+     * Sets the maximum light level.
+     * @param maxLevel The max level.
      */
    public void setMaxLevel(int maxLevel) {
        _maxLevel = maxLevel;
    }
 
     /**
-     *
-     * @return
+     * Gets whether or not the light is enabled.
+     * @return true if enabled; Otherwise, false.
      */
    public boolean isEnabled() {
        return _isEnabled;
    }
 
     /**
-     *
-     * @param enabled
+     * Sets whether or not the light is enabled.
+     * @param enabled Set true to enable.
      */
    public void setEnabled(boolean enabled) {
        _isEnabled = enabled;
    }
 
     /**
-     *
-     * @return
+     * Gets whether or not the light is read-only.
+     * @return true if read-only; Otherwise, false.
      */
    public boolean isReadonly() {
        return _isReadonly;
    }
 
     /**
-     *
-     * @param readonly
+     * Sets whether or not the light is read-only.
+     * @param readonly Set true if read-only.
      */
    public void setReadonly(boolean readonly) {
        _isReadonly = readonly;
    }
 
     /**
-     *
-     * @return
+     * (non-Javadoc)
+     * @see Packet#getTimestamp()
      */
+    @Override
    public Timestamp getTimestamp() {
        return _timestamp;
    }
 
     /**
-     *
-     * @param timestamp
+     * (non-Javadoc)
+     * @see Packet#setTimestamp(Timestamp)
      */
+    @Override
    public void setTimestamp(Timestamp timestamp) {
        _timestamp = timestamp;
    }
 
     /**
-     *
-     * @return
+     * Builds a JSON string representation of the status packet data. If client ID was not specified, then one will be
+     * randomly generated. If the timestamp was not specified, then the current local date/time will be used. All other
+     * values will be default unless set otherwise.
+     * @return The constructed JSON structure converted to string. Example:
+     * {
+     *     "id": 5,
+     *     "client_id": "dimmable_light_1",
+     *     "level": 130,
+     *     "min_level": 0,
+     *     "max_level": 255,
+     *     "type": 3,
+     *     "enabled": true,
+     *     "readonly": false,
+     *     "timestamp": "2018-10-27 09:30:27.49"
+     * }
      */
+    @Override
    public String toJsonString() {
        String clientID = _clientID;
        if (StringUtils.isBlank(clientID)) {
@@ -189,21 +208,22 @@ public class DimmableLightStatusPacket {
    }
 
     /**
-     *
+     * Builder class for {@link DimmableLightStatusPacket} objects. Allows easier control over all the flags, as well as
+     * help constructing a typical packet. If any of the flags are not set, a default value will be used.
      */
-   public static class Builder {
+   public static class Builder implements Packet.Builder<DimmableLightStatusPacket> {
        private DimmableLightStatusPacket _packet;
 
         /**
-         *
+         * Constructs a new instance of {@link Builder}.
          */
        public Builder() {
            _packet = new DimmableLightStatusPacket();
        }
 
         /**
-         *
-         * @param id
+         * Sets the Thing ID.
+         * @param id The ID.
          */
        public Builder setThingID(int id) {
            _packet.setThingID(id);
@@ -211,8 +231,8 @@ public class DimmableLightStatusPacket {
        }
 
         /**
-         *
-         * @param clientID
+         * Sets the client ID.
+         * @param clientID The client ID.
          */
        public Builder setClientID(String clientID) {
            _packet.setClientID(clientID);
@@ -220,8 +240,8 @@ public class DimmableLightStatusPacket {
        }
 
         /**
-         *
-         * @param level
+         * Sets the light level.
+         * @param level The level.
          */
        public Builder setLevel(int level) {
            _packet.setLevel(level);
@@ -229,8 +249,8 @@ public class DimmableLightStatusPacket {
        }
 
         /**
-         *
-         * @param minLevel
+         * Sets the minimum light level.
+         * @param minLevel The minimum level.
          */
        public Builder setMinLevel(int minLevel) {
            _packet.setMinLevel(minLevel);
@@ -238,8 +258,8 @@ public class DimmableLightStatusPacket {
        }
 
         /**
-         *
-         * @param maxLevel
+         * Sets the maximum light level.
+         * @param maxLevel The maximum level.
          */
        public Builder setMaxLevel(int maxLevel) {
            _packet.setMaxLevel(maxLevel);
@@ -247,8 +267,8 @@ public class DimmableLightStatusPacket {
        }
 
         /**
-         *
-         * @param enabled
+         * Sets whether or not the light is enabled.
+         * @param enabled Set true to enable.
          */
        public Builder setEnabled(boolean enabled) {
            _packet.setEnabled(enabled);
@@ -256,8 +276,8 @@ public class DimmableLightStatusPacket {
        }
 
         /**
-         *
-         * @param readonly
+         * Sets whether or not the light is read-only.
+         * @param readonly Set true if read-only.
          */
        public Builder setReadonly(boolean readonly) {
            _packet.setReadonly(readonly);
@@ -265,17 +285,19 @@ public class DimmableLightStatusPacket {
        }
 
         /**
-         *
-         * @param timestamp
+         * (non-Javadoc)
+         * @see Packet.Builder#setTimestamp(Timestamp)
          */
+        @Override
        public Builder setTimestamp(Timestamp timestamp) {
            _packet.setTimestamp(timestamp);
            return this;
        }
 
         /**
-         *
+         * Combine all of the options that have been set and return a new {@link DimmableLightStatusPacket}.
          */
+        @Override
        public DimmableLightStatusPacket build() {
            if (StringUtils.isBlank(_packet.getClientID())) {
                _packet.setClientID(MqttClient.generateClientId());
@@ -290,13 +312,14 @@ public class DimmableLightStatusPacket {
    }
 
     /**
-     *
-     * @param jsonString
-     * @return
-     * @throws ThingParseException
+     * Parses a {@link DimmableLightStatusPacket} from the specified JSON string.
+     * @param jsonString The JSON string to parse.
+     * @return null if the specified string is null or empty. Otherwise, a new {@link DimmableLightStatusPacket}
+     * populated with the values retrieved from the JSON object structure.
+     * @throws ThingParseException if parsing the specified JSON string failed (ie. invalid format).
      */
    @Nullable
-   public DimmableLightStatusPacket fromJsonString(String jsonString) throws ThingParseException {
+   public static DimmableLightStatusPacket fromJsonString(String jsonString) throws ThingParseException {
        if (StringUtils.isBlank(jsonString)) {
            return null;
        }

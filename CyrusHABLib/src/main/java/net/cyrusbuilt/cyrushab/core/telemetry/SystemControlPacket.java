@@ -1,5 +1,6 @@
 package net.cyrusbuilt.cyrushab.core.telemetry;
 
+import net.cyrusbuilt.cyrushab.core.things.Packet;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 /**
  * Represents a system control packet for transmission over MQTT.
  */
-public class SystemControlPacket {
+public class SystemControlPacket implements Packet {
     private SystemCommand _command = SystemCommand.UNKNOWN;
     private String _clientID = StringUtils.EMPTY;
     private Timestamp _timestamp = null;
@@ -55,34 +56,38 @@ public class SystemControlPacket {
     }
 
     /**
-     * Gets the client ID.
-     * @return The client ID.
+     * (non-Javadoc)
+     * @see Packet#getClientID()
      */
+    @Override
     public String getClientID() {
         return _clientID;
     }
 
     /**
-     * Sets the client ID.
-     * @param clientID The client ID.
+     * (non-Javadoc)
+     * @see Packet#setClientID(String)
      */
-    private void setClientID(String clientID) {
+    @Override
+    public void setClientID(String clientID) {
         _clientID = clientID;
     }
 
     /**
-     * Gets the timestamp.
-     * @return The timestamp.
+     * (non-Javadoc)
+     * @see Packet#getTimestamp()
      */
+    @Override
     public Timestamp getTimestamp() {
         return _timestamp;
     }
 
     /**
-     * Sets the timestamp.
-     * @param timestamp The timestamp.
+     * (non-Javadoc)
+     * @see Packet#setTimestamp(Timestamp)
      */
-    private void setTimestamp(Timestamp timestamp) {
+    @Override
+    public void setTimestamp(Timestamp timestamp) {
         _timestamp = timestamp;
     }
 
@@ -97,6 +102,7 @@ public class SystemControlPacket {
      *     "timestamp": "2018-10-24 15:34:42.31"
      * }
      */
+    @Override
     public String toJsonString() {
         String clientID = _clientID;
         if (StringUtils.isBlank(clientID)) {
@@ -120,7 +126,7 @@ public class SystemControlPacket {
      * Builder class for {@link SystemControlPacket} objects. Allows easier control over all the flags, as well as help
      * constructing a typical packet. If any of the flags are not set, a default value will be used.
      */
-    public static class Builder {
+    public static class Builder implements Packet.Builder<SystemControlPacket> {
         private SystemControlPacket _packet;
 
         /**
@@ -149,9 +155,10 @@ public class SystemControlPacket {
         }
 
         /**
-         * Sets the timestamp.
-         * @param timestamp The timestamp.
+         * (non-Javadoc)
+         * @see Packet.Builder#setTimestamp(Timestamp)
          */
+        @Override
         public Builder setTimestamp(Timestamp timestamp) {
             _packet.setTimestamp(timestamp);
             return this;
@@ -160,6 +167,7 @@ public class SystemControlPacket {
         /**
          * Combine all of the options that have been set and return a new {@link SystemControlPacket}.
          */
+        @Override
         public SystemControlPacket build() {
             if (StringUtils.isBlank(_packet.getClientID())) {
                 _packet.setClientID(MqttClient.generateClientId());

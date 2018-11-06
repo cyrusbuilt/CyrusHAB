@@ -1,4 +1,6 @@
 # CyrusHAB
+[![Build Status](https://travis-ci.com/cyrusbuilt/CyrusHAB.svg?branch=master)](https://travis-ci.com/cyrusbuilt/CyrusHAB)
+
 My own custom home automation daemon implementing MQTT. This project is currently in its infancy and nowhere near Alpha
 status. It is, however, actively being developed so that I can hopefully implement it soon(ish). Stay tuned if you're
 interested.

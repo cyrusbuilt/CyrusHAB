@@ -135,7 +135,6 @@ public final class MqttManager {
     private MqttManager() {
         _handlerCallback = new HandlerCallback();
         _listeners = new ArrayList<>();
-        _service = Executors.newSingleThreadExecutor();
     }
 
     /**
@@ -245,6 +244,7 @@ public final class MqttManager {
      */
     public void initialize() throws HABMqttException {
         // TODO make data storage dir configurable so we can put queued messages somewhere else (ie subdir of daemon).
+        _service = Executors.newSingleThreadExecutor();
         String tmpDir = System.getProperty("java.io.tmpdir");
         MqttDefaultFilePersistence dataStore = new MqttDefaultFilePersistence(tmpDir);
         try {

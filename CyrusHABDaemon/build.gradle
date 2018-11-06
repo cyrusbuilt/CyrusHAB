@@ -3,6 +3,10 @@ buildscript {
         jcenter()
         mavenCentral()
     }
+
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.1'
+    }
 }
 
 apply plugin: 'idea'
@@ -41,6 +45,41 @@ jar {
     }
 }
 
+applicationDistribution.from("src/main/scripts") {
+    include 'hab_daemon_launcher.sh'
+    into "bin"
+}
+
 task runServer(type :Exec) {
     commandLine 'bash', '../run_daemon.sh'
+}
+
+apply plugin: 'nebula.deb'
+
+task buildDeb(type: Deb) {
+    packageName = project.name.toLowerCase()
+    version = version
+    release = 1
+
+    installUtils file('src/main/scripts/deb/utils.sh')
+    preInstall file('src/main/scripts/deb/preInstall.sh')
+    preUninstall file('src/main/scripts/deb/preUninstall.sh')
+
+    requires('jsvc')
+
+    into '/opt/' + packageName
+
+    from('src/main/resources') {
+        into 'config'
+    }
+
+    def libDir = buildDir.absolutePath + "/install/" + project.name + '/lib'
+    from(libDir) {
+        into 'lib'
+    }
+
+    from('src/main/scripts') {
+        include 'hab_daemon_launcher.sh'
+        into 'bin'
+    }
 }

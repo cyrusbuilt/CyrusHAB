@@ -30,6 +30,4 @@ public final class HABSystem {
     public static final String SYS_COMMAND = "command";
 
     private HABSystem() {}
-
-
 }

@@ -87,6 +87,7 @@ public abstract class Thermostat implements Thing {
     }
 
     private String _name = StringUtils.EMPTY;
+    private String _clientID = StringUtils.EMPTY;
     private Object _tag = null;
     private final ThingType _type = ThingType.THERMOSTAT;
     private boolean _isDisposed = false;
@@ -129,6 +130,24 @@ public abstract class Thermostat implements Thing {
     @Override
     public void setThingID(int id) {
         _id = id;
+    }
+
+    /**
+     * (non-Javadoc)
+     * @see Thing#clientID()
+     */
+    @Override
+    public String clientID() {
+        return _clientID;
+    }
+
+    /**
+     * (non-Javadoc)
+     * @see Thing#setClientID(String)
+     */
+    @Override
+    public void setClientID(String clientID) {
+        _clientID = clientID;
     }
 
     /**
@@ -198,7 +217,7 @@ public abstract class Thermostat implements Thing {
      * Sets whether or not this device is read-only. A read-only device can get status but can't be controlled.
      * @param readonly Set true if read-only.
      */
-    protected void setIsReadonly(boolean readonly) {
+    public void setIsReadonly(boolean readonly) {
         _isReadonly = readonly;
     }
 
@@ -216,7 +235,7 @@ public abstract class Thermostat implements Thing {
      * @param enabled Set true to enable.
      * @throws ObjectDisposedException if this instance has been disposed.
      */
-    protected void setEnabled(boolean enabled) throws ObjectDisposedException {
+    public void setEnabled(boolean enabled) throws ObjectDisposedException {
         if (isDisposed()) {
             throw new ObjectDisposedException(Thermostat.class.getCanonicalName());
         }

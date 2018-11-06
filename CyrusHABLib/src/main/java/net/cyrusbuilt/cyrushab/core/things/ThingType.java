@@ -27,9 +27,9 @@ public enum ThingType implements Valueable<ThingType, Integer> {
     MOTION_SENSOR(4),
 
     /**
-     * The Thing is a door lock.
+     * The Thing is a door.
      */
-    DOOR_LOCK(5),
+    DOOR(5),
 
     /**
      * The Thing is garage door.
@@ -40,6 +40,11 @@ public enum ThingType implements Valueable<ThingType, Integer> {
      * The thing in question is actually the controller system itself.
      */
     SYSTEM(7),
+
+    /**
+     * The thing in question is actually the client app.
+     */
+    APP(8),
 
     /**
      * The Thing type is unknown.

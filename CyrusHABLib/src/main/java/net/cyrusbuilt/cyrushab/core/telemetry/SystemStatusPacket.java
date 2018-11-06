@@ -1,5 +1,6 @@
 package net.cyrusbuilt.cyrushab.core.telemetry;
 
+import net.cyrusbuilt.cyrushab.core.things.Packet;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 /**
  * Represents a system status packet for transmission over MQTT.
  */
-public class SystemStatusPacket {
+public class SystemStatusPacket implements Packet {
     private SystemStatus _status = SystemStatus.UNKNOWN;
     private String _clientID = StringUtils.EMPTY;
     private Timestamp _timestamp = null;
@@ -37,18 +38,20 @@ public class SystemStatusPacket {
     }
 
     /**
-     * Gets the client ID.
-     * @return The client ID.
+     * (non-Javdoc)
+     * @see Packet#getClientID()
      */
+    @Override
     public String getClientID() {
         return _clientID;
     }
 
     /**
-     * Sets the client ID. Only used by {@link Builder}.
-     * @param clientID The client ID.
+     * (non-Javadoc)
+     * @see Packet#setClientID(String)
      */
-    private void setClientID(String clientID) {
+    @Override
+    public void setClientID(String clientID) {
         _clientID = clientID;
     }
 
@@ -69,18 +72,20 @@ public class SystemStatusPacket {
     }
 
     /**
-     * Gets the timestamp.
-     * @return The timestamp.
+     * (non-Javadoc)
+     * @see Packet#getTimestamp()
      */
+    @Override
     public Timestamp getTimestamp() {
         return _timestamp;
     }
 
     /**
-     * Sets the timestamp. Only used by {@link Builder}.
-     * @param timestamp The timestamp.
+     * (non-Javadoc)
+     * @see Packet#setTimestamp(Timestamp)
      */
-    private void setTimestamp(Timestamp timestamp) {
+    @Override
+    public void setTimestamp(Timestamp timestamp) {
         _timestamp = timestamp;
     }
 
@@ -95,6 +100,7 @@ public class SystemStatusPacket {
      *     "timestamp": "2018-10-17 10:36:43"
      * }
      */
+    @Override
     public String toJsonString() {
         String clientID = _clientID;
         if (StringUtils.isBlank(clientID)) {
@@ -118,7 +124,7 @@ public class SystemStatusPacket {
      * Builder class for {@link SystemStatusPacket} objects. Allows easier control over all the flags, as well as help
      * constructing a typical packet. If any of the flags are not set, a default value will be used.
      */
-    public static class Builder {
+    public static class Builder implements Packet.Builder<SystemStatusPacket> {
         private SystemStatusPacket _packet;
 
         /**
@@ -147,9 +153,10 @@ public class SystemStatusPacket {
         }
 
         /**
-         * Sets the timestamp. If null or not specified, then the default of the current local date/time will be used.
-         * @param timestamp The timestamp.
+         * (non-Javadoc)
+         * @see Packet.Builder#setTimestamp(Timestamp)
          */
+        @Override
         public Builder setTimestamp(Timestamp timestamp) {
             _packet.setTimestamp(timestamp);
             return this;
@@ -158,6 +165,7 @@ public class SystemStatusPacket {
         /**
          * Combine all of the options that have been set and return a new {@link SystemStatusPacket}.
          */
+        @Override
         public SystemStatusPacket build() {
             if (StringUtils.isBlank(_packet.getClientID())) {
                 _packet.setClientID(MqttClient.generateClientId());

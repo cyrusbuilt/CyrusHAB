@@ -27,6 +27,26 @@ public enum SystemCommand implements Valueable<SystemCommand, Integer> {
     RESTART(3),
 
     /**
+     * Request system status.
+     */
+    GET_SYS_STATUS(4),
+
+    /**
+     * Request the status of all devices.
+     */
+    GET_ALL_DEVICE_STATUS(5),
+
+    /**
+     * Request heartbeat (acknowledgement).
+     */
+    HEARTBEAT(6),
+
+    /**
+     * Request inventory of all registered Things.
+     */
+    GET_ALL_THE_THINGS(7),
+
+    /**
      * Command is unknown.
      */
     UNKNOWN(4);

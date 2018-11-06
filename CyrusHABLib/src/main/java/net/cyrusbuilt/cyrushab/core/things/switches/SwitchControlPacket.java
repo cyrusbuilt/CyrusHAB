@@ -1,5 +1,6 @@
 package net.cyrusbuilt.cyrushab.core.things.switches;
 
+import net.cyrusbuilt.cyrushab.core.things.Packet;
 import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 /**
  * Represents a switch control packet for transmission over MQTT.
  */
-public class SwitchControlPacket {
+public class SwitchControlPacket implements Packet {
     private int _id = -1;
     private String _clientID = StringUtils.EMPTY;
     private SwitchState _state = SwitchState.OFF;
@@ -46,17 +47,19 @@ public class SwitchControlPacket {
     }
 
     /**
-     * Gets the client ID of the switch.
-     * @return The client ID.
+     * (non-Javadoc)
+     * @see Packet#getClientID()
      */
+    @Override
     public String getClientID() {
         return _clientID;
     }
 
     /**
-     * Sets the client ID of the switch.
-     * @param clientID The client ID.
+     * (non-Javadoc)
+     * @see Packet#setClientID(String)
      */
+    @Override
     public void setClientID(String clientID) {
         _clientID = clientID;
     }
@@ -110,17 +113,19 @@ public class SwitchControlPacket {
     }
 
     /**
-     * Gets the timestamp of the control packet.
-     * @return The timestamp.
+     * (non-Javadoc)
+     * @see Packet#getTimestamp()
      */
+    @Override
     public Timestamp getTimestamp() {
         return _timestamp;
     }
 
     /**
-     * Sets the timestamp on the control packet.
-     * @param timestamp The timestamp.
+     * (non-Javadoc)
+     * @see Packet#setTimestamp(Timestamp)
      */
+    @Override
     public void setTimestamp(Timestamp timestamp) {
         _timestamp = timestamp;
     }
@@ -140,6 +145,7 @@ public class SwitchControlPacket {
      *     "timestamp": "2018-10-28 13:23:31.41"
      * }
      */
+    @Override
     public String toJsonString() {
         String clientID = _clientID;
         if (StringUtils.isBlank(clientID)) {
@@ -147,7 +153,7 @@ public class SwitchControlPacket {
         }
 
         int state = _state.getValue();
-        int type = ThingType.THERMOSTAT.getValue();
+        int type = ThingType.SWITCH.getValue();
         Timestamp tstamp = _timestamp;
         if (tstamp == null) {
             tstamp = Timestamp.valueOf(LocalDateTime.now());
@@ -166,9 +172,9 @@ public class SwitchControlPacket {
 
     /**
      * Builder class for {@link SwitchControlPacket} objects. Allows easier control over all the flags, as well as
-     *      * help constructing a typical packet. If any of the flags are not set, a default value will be used.
+     * help constructing a typical packet. If any of the flags are not set, a default value will be used.
      */
-    public static class Builder {
+    public static class Builder implements Packet.Builder<SwitchControlPacket> {
         private SwitchControlPacket _packet;
 
         /**
@@ -224,9 +230,10 @@ public class SwitchControlPacket {
         }
 
         /**
-         * Sets the timestamp.
-         * @param timestamp The timestamp.
+         * (non-Javadoc)
+         * @see Packet.Builder#setTimestamp(Timestamp)
          */
+        @Override
         public Builder setTimestamp(Timestamp timestamp) {
             _packet.setTimestamp(timestamp);
             return this;
@@ -235,6 +242,7 @@ public class SwitchControlPacket {
         /**
          * Combine all of the options that have been set and return a new {@link SwitchControlPacket}.
          */
+        @Override
         public SwitchControlPacket build() {
             if (StringUtils.isBlank(_packet.getClientID())) {
                 _packet.setClientID(MqttClient.generateClientId());
@@ -249,7 +257,7 @@ public class SwitchControlPacket {
     }
 
     /**
-     * Parses a from {@link SwitchControlPacket} the specified JSON string.
+     * Parses a {@link SwitchControlPacket} from the specified JSON string.
      * @param jsonString The JSON string to parse.
      * @return null if the specified string is null or empty. Otherwise, a new {@link SwitchControlPacket} populated
      * with the values retrieved from the JSON object structure.
