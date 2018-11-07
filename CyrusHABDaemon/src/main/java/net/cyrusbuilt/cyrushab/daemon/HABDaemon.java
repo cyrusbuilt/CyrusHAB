@@ -17,6 +17,8 @@ import net.cyrusbuilt.cyrushab.core.things.dimmablelight.DimmableLightStatusPack
 import net.cyrusbuilt.cyrushab.core.things.door.Door;
 import net.cyrusbuilt.cyrushab.core.things.door.DoorControlPacket;
 import net.cyrusbuilt.cyrushab.core.things.door.DoorStatusPacket;
+import net.cyrusbuilt.cyrushab.core.things.motionsensor.MotionSensor;
+import net.cyrusbuilt.cyrushab.core.things.motionsensor.MotionSensorStatusPacket;
 import net.cyrusbuilt.cyrushab.core.things.switches.Switch;
 import net.cyrusbuilt.cyrushab.core.things.switches.SwitchControlPacket;
 import net.cyrusbuilt.cyrushab.core.things.switches.SwitchStatusPacket;
@@ -265,9 +267,6 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
                             .setLocked(d.isLocked())
                             .setTimestamp(Util.getCurrentTimestamp())
                             .build();
-                    break;
-                case GARAGE_DOOR:
-                    // TODO handle garage door.
                     break;
                 case UNKNOWN:
                 default:
@@ -550,6 +549,29 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         enqueueOutboundEvent(event);
     }
 
+    private void processMotionSensorStatusPacket(@NotNull MotionSensorStatusPacket packet) {
+        logger.info("Received status message from: " + packet.getClientID() + " at " + packet.getTimestamp().toString());
+        MotionSensor sensor = (MotionSensor)Configuration.getThingFromRegistry(packet.getThingID());
+        if (sensor == null) {
+            logger.warn("MotionSensor not found in Thing registry. DEV_ID: " + packet.getThingID());
+            return;
+        }
+
+        try {
+            sensor.mapFromStatusPacket(packet);
+            packet.setClientID(Configuration.clientID());
+            packet.setTimestamp(Util.getCurrentTimestamp());
+            String message = packet.toJsonString();
+            String topic = Configuration.applicationTopic();
+
+            logger.info("Publishing MotionSensor status to topic: " + topic);
+            MqttManager.getInstance().publish(topic, message);
+        }
+        catch (Exception e) {
+            logger.error("Error publishing status: " + e.getMessage());
+        }
+    }
+
     private void processMqttMessage(@NotNull MqttManager.MqttEvent event) {
         String topic = event.topic();
         String message = event.message();
@@ -615,11 +637,23 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
                             }
                         }
                         break;
-                    case GARAGE_DOOR:
-                        // TODO process garage door.
-                        break;
                     case MOTION_SENSOR:
-                        // TODO process motion sensor.
+                        if (isControl) {
+                            logger.warn("Cannot send control packets to MotionSensor types as they are read-only.");
+                        }
+                        else {
+                            if (topic.startsWith(Configuration.thingControlTopicBase())) {
+                                logger.warn("Cannot send control packets to MotionSensor types as they are read-only.");
+                            }
+
+                            // We received a status message from a Thing.
+                            if (topic.equalsIgnoreCase(Configuration.thingStatusTopicBase())) {
+                                MotionSensorStatusPacket mstatus = MotionSensorStatusPacket.fromJsonString(message);
+                                if (mstatus != null) {
+                                    processMotionSensorStatusPacket(mstatus);
+                                }
+                            }
+                        }
                         break;
                     case THERMOSTAT:
                         if (isControl) {

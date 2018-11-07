@@ -1,23 +1,23 @@
-package net.cyrusbuilt.cyrushab.core.things.door;
+package net.cyrusbuilt.cyrushab.core.things.motionsensor;
 
 import net.cyrusbuilt.cyrushab.core.Valueable;
 
 /**
- * Possible door commands.
+ * Possible motion sensor states.
  */
-public enum DoorCommand implements Valueable<DoorCommand, Integer> {
+public enum MotionSensorState implements Valueable<MotionSensorState, Integer> {
     /**
-     * Open the door.
+     * The sensor is idle.
      */
-    OPEN(0),
+    IDLE(0),
 
     /**
-     * Close the door.
+     * The sensor tripped.
      */
-    CLOSE(1),
+    TRIPPED(1),
 
     /**
-     * The door command is unknown.
+     * The sensor state is unknown.
      */
     UNKNOWN(2);
 
@@ -27,7 +27,7 @@ public enum DoorCommand implements Valueable<DoorCommand, Integer> {
      * Sets the parameter value.
      * @param value The value to set.
      */
-    DoorCommand(int value) {
+    MotionSensorState(int value) {
         this.value = value;
     }
 
@@ -36,14 +36,14 @@ public enum DoorCommand implements Valueable<DoorCommand, Integer> {
      * @see Valueable#getType(Object)
      */
     @Override
-    public DoorCommand getType(Integer value) {
+    public MotionSensorState getType(Integer value) {
         if (value == null) {
             return UNKNOWN;
         }
 
-        for (DoorCommand dc : values()) {
-            if (dc.value == value) {
-                return UNKNOWN;
+        for (MotionSensorState state : values()) {
+            if (state.value == value) {
+                return state;
             }
         }
 

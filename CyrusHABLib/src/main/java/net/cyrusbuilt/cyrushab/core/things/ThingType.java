@@ -32,19 +32,14 @@ public enum ThingType implements Valueable<ThingType, Integer> {
     DOOR(5),
 
     /**
-     * The Thing is garage door.
-     */
-    GARAGE_DOOR(6),
-
-    /**
      * The thing in question is actually the controller system itself.
      */
-    SYSTEM(7),
+    SYSTEM(6),
 
     /**
      * The thing in question is actually the client app.
      */
-    APP(8),
+    APP(7),
 
     /**
      * The Thing type is unknown.

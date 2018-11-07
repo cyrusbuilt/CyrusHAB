@@ -4,9 +4,10 @@ import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
 import net.cyrusbuilt.cyrushab.core.things.dimmablelight.DimmableLight;
 import net.cyrusbuilt.cyrushab.core.things.door.Door;
+import net.cyrusbuilt.cyrushab.core.things.motionsensor.MotionSensor;
 import net.cyrusbuilt.cyrushab.core.things.switches.Switch;
-
 import net.cyrusbuilt.cyrushab.core.things.thermostat.Thermostat;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,7 +213,12 @@ public final class Configuration {
                     result = tstat;
                     break;
                 case MOTION_SENSOR:
-                    // TODO load motion sensor
+                    MotionSensor ms = new MotionSensor() {};
+                    ms.setClientID(clientID);
+                    ms.setThingID(id);
+                    ms.setName(name);
+                    ms.setEnabled(enabled);
+                    result = ms;
                     break;
                 case DIMMABLE_LIGHT:
                     int minLevel = 0;
@@ -243,9 +249,6 @@ public final class Configuration {
                     newDoor.setEnabled(enabled);
                     newDoor.setIsReadonly(readonly);
                     result = newDoor;
-                    break;
-                case GARAGE_DOOR:
-
                     break;
                 case UNKNOWN:
                     // TODO what to do here?

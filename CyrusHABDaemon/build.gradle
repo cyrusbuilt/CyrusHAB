@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.netflix.nebula:gradle-ospackage-plugin:2.2.1'
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:5.1.0'
     }
 }
 
@@ -58,7 +58,7 @@ apply plugin: 'nebula.deb'
 
 task buildDeb(type: Deb) {
     packageName = project.name.toLowerCase()
-    version = version
+    version = project.version
     release = 1
 
     installUtils file('src/main/scripts/deb/utils.sh')
@@ -73,8 +73,7 @@ task buildDeb(type: Deb) {
         into 'config'
     }
 
-    def libDir = buildDir.absolutePath + "/install/" + project.name + '/lib'
-    from(libDir) {
+    from (buildDir.absolutePath + "/install/" + project.name + "/lib") {
         into 'lib'
     }
 
