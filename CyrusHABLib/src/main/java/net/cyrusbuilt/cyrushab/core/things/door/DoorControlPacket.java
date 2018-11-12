@@ -114,6 +114,14 @@ public class DoorControlPacket implements Packet {
     }
 
     /**
+     * Gets the type of Thing (always DOOR).
+     * @return The Thing type.
+     */
+    public ThingType getType() {
+        return ThingType.DOOR;
+    }
+
+    /**
      * Gets whether the light is read-only.
      * @return true if read-only; Otherwise, false.
      */
@@ -185,7 +193,7 @@ public class DoorControlPacket implements Packet {
         jsonObject.put(Thing.THING_TYPE, type);
         jsonObject.put(Thing.THING_READONLY, _readonly);
         jsonObject.put(Thing.THING_ENABLED, _enabled);
-        jsonObject.put(Thing.THING_TIMESTAMP, tstamp);
+        jsonObject.put(Thing.THING_TIMESTAMP, tstamp.toString());
         return jsonObject.toJSONString();
     }
 

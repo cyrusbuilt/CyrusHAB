@@ -43,7 +43,7 @@ public enum DoorCommand implements Valueable<DoorCommand, Integer> {
 
         for (DoorCommand dc : values()) {
             if (dc.value == value) {
-                return UNKNOWN;
+                return dc;
             }
         }
 

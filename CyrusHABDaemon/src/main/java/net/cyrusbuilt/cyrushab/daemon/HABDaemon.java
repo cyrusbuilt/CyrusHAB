@@ -35,11 +35,18 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Timestamp;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+/**
+ * The main class of this daemon. Responsible for processing control and status messages for client devices as well as
+ * system control messages sent via MQTT.
+ */
 public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
     private static final Logger logger = LoggerFactory.getLogger(HABDaemon.class);
     private static final int MAX_RECONNECT_ATTEMPTS = 3;
@@ -53,21 +60,35 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
     private Queue<MqttManager.MqttEvent> _outboundEventQueue;
     private BlockingDeque<Runnable> _systemQueue;
     private int _reconnects = 0;
+    private TimerTask _reconnectTask;
+    private Timer _reconnectTimer;
     private volatile SystemStatus _status = SystemStatus.DISABLED;
     private volatile int _eventID = 0;
 
+    /**
+     * Constructs a new instance of {@link HABDaemon}.
+     */
     public HABDaemon() {
         super();
         _instance = this;
         _inboundEventQueue = new ArrayDeque<>();
         _outboundEventQueue = new ArrayDeque<>();
         _systemQueue = new LinkedBlockingDeque<>();
+        _reconnectTimer = new Timer("MQTTReconnectTimer");
     }
 
+    /**
+     *
+     * @return
+     */
     public static HABDaemon getInstance() {
         return _instance;
     }
 
+    /**
+     * Sets the system status.
+     * @param status The current system status.
+     */
     private synchronized void setSystemStatus(@NotNull final SystemStatus status) {
         if (_status != status) {
             logger.info("Setting system status: " + status.name());
@@ -75,14 +96,26 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         }
     }
 
+    /**
+     * Gets the system's current status.
+     * @return The current system status.
+     */
     private synchronized SystemStatus getStatus() {
         return _status;
     }
 
+    /**
+     * Gets whether or not the system is in a running state.
+     * @return true if the system is running; Otherwise, false.
+     */
     public synchronized boolean isRunning() {
         return _status != SystemStatus.SHUTDOWN;
     }
 
+    /**
+     * Gets whether the system is disabled (not processing device messages).
+     * @return true if disabled; Otherwise, false.
+     */
     public synchronized boolean isDisabled() {
         return _status == SystemStatus.DISABLED;
     }
@@ -91,6 +124,9 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         return _eventID++;
     }
 
+    /**
+     * Initializes the MQTT manager and begins listening for MQTT events.
+     */
     private void initMqttManager() {
         logger.info("Initializing MQTT manager...");
         String brokerUrl = "tcp://" + Configuration.mqttBroker() + ":" + Configuration.port();
@@ -117,6 +153,9 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         }
     }
 
+    /**
+     * Main system loop. Processes tasks in the system queue.
+     */
     private void loop() {
         try {
             _systemQueue.take().run();
@@ -127,6 +166,9 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         }
     }
 
+    /**
+     * Processes any available events in the inbound queue.
+     */
     private synchronized void processInboundEventQueue() {
         // NOTE we need to continue processing incoming messages even when the system is disabled.
         // Just in case we get a shutdown or enable command.
@@ -143,6 +185,9 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         }
     }
 
+    /**
+     * Processes any available events in the outbound queue if the system is enabled.
+     */
     private synchronized void processOutboundEventQueue() {
         if (!isDisabled()) {
             MqttManager.MqttEvent event = dequeueOutboundEvent();
@@ -241,7 +286,14 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
                             .build();
                     break;
                 case MOTION_SENSOR:
-                    // TODO handle motion sensor.
+                    MotionSensor ms = (MotionSensor)thing;
+                    packet = new MotionSensorStatusPacket.Builder()
+                            .setClientID(ms.clientID())
+                            .setThingID(ms.id())
+                            .setEnabled(ms.isEnabled())
+                            .setState(ms.getState())
+                            .setTimestamp(Util.getCurrentTimestamp())
+                            .build();
                     break;
                 case DIMMABLE_LIGHT:
                     DimmableLight dl = (DimmableLight)thing;
@@ -287,7 +339,7 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         }
     }
 
-    private void processSystemCommand(SystemControlPacket packet) {
+    private void processSystemCommand(@NotNull SystemControlPacket packet) {
         logger.info("Received system command : " + packet.getCommand().name() +
                 " from client ID: " + packet.getClientID() +
                 " at " + packet.getTimestamp().toString());
@@ -339,19 +391,19 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
                 break;
 
             case HEARTBEAT:
-                publishHeartbeat(packet.getClientID());
+                _systemQueue.add(() -> publishHeartbeat(packet.getClientID()));
                 break;
 
             case GET_SYS_STATUS:
-                publishSystemStatus();
+                _systemQueue.add(this::publishSystemStatus);
                 break;
 
             case GET_ALL_THE_THINGS:
-                publishThingInventory(packet.getClientID());
+                _systemQueue.add(() -> publishThingInventory(packet.getClientID()));
                 break;
 
             case GET_ALL_DEVICE_STATUS:
-                publishAllDeviceStatuses();
+                _systemQueue.add(this::publishAllDeviceStatuses);
                 break;
 
             case UNKNOWN:
@@ -572,6 +624,10 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         }
     }
 
+    /**
+     * Processes the specified MQTT event.
+     * @param event The event to process.
+     */
     private void processMqttMessage(@NotNull MqttManager.MqttEvent event) {
         String topic = event.topic();
         String message = event.message();
@@ -755,27 +811,35 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
      */
     @Override
     public void onConnectionLost(Throwable cause) {
+        setSystemStatus(SystemStatus.DISCONNECTED);
         _reconnects++;
         logger.error("MQTT connection lost! Cause: " + cause.toString());
-        cause.printStackTrace();
         logger.error("Attempting reconnect (attempt " + _reconnects + " of " + MAX_RECONNECT_ATTEMPTS + ") ...");
         try {
             if (_reconnects < MAX_RECONNECT_ATTEMPTS) {
                 setSystemStatus(SystemStatus.RECONNECTING);
                 MqttManager.getInstance().connect();
-                publishSystemStatus();
+                logger.info("Successfully reconnected to " + Configuration.mqttBroker());
                 setSystemStatus(SystemStatus.NORMAL);
-            }
-            else {
+                publishSystemStatus();
+            } else {
                 logger.error("Failed to reconnect to MQTT host.");
+                Timestamp nextRun = new Timestamp(System.currentTimeMillis() + 30000L);
+                logger.error("Will attempt again at " + nextRun.toLocalDateTime().toString());
                 _reconnects = 0;
+                try {
+                    _reconnectTimer.scheduleAtFixedRate(_reconnectTask, 30000L, 30000L);
+                }
+                catch (IllegalStateException e) {
+                    logger.warn(e.getMessage());
+                }
             }
         }
         catch (HABMqttException ex) {
-            // TODO Start a timer and wait a while before retrying again.
-            setSystemStatus(SystemStatus.DISCONNECTED);
             logger.error("Failed to re-establish connection to MQTT broker: " + Configuration.mqttBroker() +
                     ", Reason: " + ex.getMessage());
+            setSystemStatus(SystemStatus.DISCONNECTED);
+            onConnectionLost(ex);
         }
     }
 
@@ -823,6 +887,27 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
             System.exit(1);
         }
 
+        // MQTT reconnect task. Should be scheduled when the connection to the MQTT host is lost.
+        _reconnectTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (getStatus() == SystemStatus.DISCONNECTED || getStatus() == SystemStatus.RECONNECTING) {
+                    logger.warn("MQTT still disconnected. Attempting periodic reconnect....");
+                    onConnectionLost(new Throwable("Previous connection failure."));
+                    if (getStatus() == SystemStatus.NORMAL) {
+                        cancel();
+                        _reconnectTimer.purge();
+                    }
+                }
+                else {
+                    logger.info("MQTT reconnected. Cancelling reconnect task.");
+                    cancel();
+                    _reconnectTimer.purge();
+                }
+            }
+        };
+
+        // Main system thread. Runs the main loop which processes tasks in the system queue.
         if (_mainThread == null) {
             _mainThread = new Thread() {
                 private final Object syncLock = new Object();
@@ -882,6 +967,10 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         _outboundEventProcessor.setName("CyrusHAB_OutboundEventProcessor");
     }
 
+    /**
+     * Main startup routine. Reads configuration and Thing registry, then starts up the subsystems like MQTT and
+     * inbound and outbound queue processors.
+     */
     private void doStart() {
         // Load daemon config. Terminate on failure.
         logger.info("Loading configuration...");
@@ -926,14 +1015,15 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
         doStart();
     }
 
+    /**
+     * Main shutdown routine. Publishes the shutdown if it can, then stops the inbound and outbound queue processors,
+     * and then finally stops the MQTT manager.
+     */
     private void doStop() {
         // Let everyone know we are shutting down first.
         logger.info("Stop requested.");
         setSystemStatus(SystemStatus.SHUTDOWN);
         publishSystemStatus();
-
-        logger.info("Stopping MQTT manager...");
-        MqttManager.getInstance().shutdown();
 
         try {
             logger.info("Stopping inbound event queue processor...");
@@ -945,6 +1035,9 @@ public class HABDaemon implements Daemon, MqttManager.MqttEventListener {
             logger.error(ex.getMessage());
             //throw ex;
         }
+
+        logger.info("Stopping MQTT manager...");
+        MqttManager.getInstance().shutdown();
     }
 
     /**

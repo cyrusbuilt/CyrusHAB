@@ -155,7 +155,7 @@ public abstract class MotionSensor implements Thing {
      */
     @Override
     public ThingType type() {
-        return ThingType.DOOR;
+        return ThingType.MOTION_SENSOR;
     }
 
     /**

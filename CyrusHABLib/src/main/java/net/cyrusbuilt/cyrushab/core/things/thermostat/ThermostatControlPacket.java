@@ -5,7 +5,6 @@ import net.cyrusbuilt.cyrushab.core.things.Thing;
 import net.cyrusbuilt.cyrushab.core.things.ThingParseException;
 import net.cyrusbuilt.cyrushab.core.things.ThingType;
 
-import net.cyrusbuilt.cyrushab.core.things.switches.SwitchControlPacket;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,6 @@ import java.time.LocalDateTime;
 public class ThermostatControlPacket implements Packet {
     private int _id = -1;
     private String _clientID = StringUtils.EMPTY;
-    private ThermostatState _state = ThermostatState.UNKNOWN;
     private ThermostatMode _mode = ThermostatMode.OFF;
     private boolean _isEnabled = false;
     private boolean _isReadonly = false;
@@ -155,7 +153,6 @@ public class ThermostatControlPacket implements Packet {
             clientID = MqttClient.generateClientId();
         }
 
-        int state = _state.getValue();
         int mode = _mode.getValue();
         int type = ThingType.THERMOSTAT.getValue();
         Timestamp tstamp = _timestamp;
@@ -167,7 +164,6 @@ public class ThermostatControlPacket implements Packet {
         jsonObject.put(Thing.THING_ID, _id);
         jsonObject.put(Thing.THING_CLIENT_ID, clientID);
         jsonObject.put(Thing.THING_TYPE, type);
-        jsonObject.put(Thing.THING_STATE, state);
         jsonObject.put(Thermostat.THERMOSTAT_MODE, mode);
         jsonObject.put(Thing.THING_ENABLED, _isEnabled);
         jsonObject.put(Thing.THING_READONLY, _isReadonly);

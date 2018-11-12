@@ -206,7 +206,7 @@ public class ThermostatStatusPacket implements Packet {
         }
 
         int state = _state.getValue();
-        int type = ThingType.SWITCH.getValue();
+        int type = ThingType.THERMOSTAT.getValue();
         int mode = _mode.getValue();
         Timestamp tstamp = _timestamp;
         if (tstamp == null) {

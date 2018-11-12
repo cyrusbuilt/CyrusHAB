@@ -178,6 +178,7 @@ public class DoorStatusPacket implements Packet {
         int type = ThingType.DOOR.getValue();
 
         JSONObject jsonObject = new JSONObject();
+        jsonObject.put(Thing.THING_ID, _thingID);
         jsonObject.put(Thing.THING_CLIENT_ID, clientID);
         jsonObject.put(Thing.THING_STATE, state);
         jsonObject.put(Door.DOOR_LOCK_ENABLED, _isLocked);

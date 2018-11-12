@@ -299,7 +299,7 @@ public abstract class Switch implements Thing {
     }
 
     /**
-     * Gets whether the Swith is "On".
+     * Gets whether the Switch is "On".
      * @return true if "On"; Otherwise, false.
      */
     public boolean isOn() {

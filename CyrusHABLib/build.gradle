@@ -17,6 +17,10 @@ repositories {
     mavenCentral()
 }
 
+version = '0.1.0'
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
 dependencies {
     implementation 'org.jetbrains:annotations:16.0.2'
     implementation 'com.googlecode.json-simple:json-simple:1.1'
@@ -28,8 +32,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 
-version = '0.1.0'
-
 javadoc {
     source = sourceSets.main.allJava
 }
@@ -39,6 +41,7 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
 }
 
+javadoc.failOnError = false
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir

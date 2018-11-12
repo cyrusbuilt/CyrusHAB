@@ -98,6 +98,12 @@ public class MotionSensorStatusPacket implements Packet {
     }
 
     /**
+     * Gets whether the Motion Sensor is read-only (always true).
+     * @return true if read-only, which is always the case here.
+     */
+    public boolean isReadonly() { return true; }
+
+    /**
      * Gets the motion sensor state.
      * @return The current state.
      */
@@ -111,6 +117,14 @@ public class MotionSensorStatusPacket implements Packet {
      */
     public void setState(MotionSensorState state) {
         _state = state;
+    }
+
+    /**
+     * Gets the type of Thing for this packet.
+     * @return The Thing type.
+     */
+    public ThingType getType() {
+        return ThingType.MOTION_SENSOR;
     }
 
     /**
@@ -144,6 +158,7 @@ public class MotionSensorStatusPacket implements Packet {
         int type = ThingType.MOTION_SENSOR.getValue();
 
         JSONObject jsonObject = new JSONObject();
+        jsonObject.put(Thing.THING_ID, _thingID);
         jsonObject.put(Thing.THING_CLIENT_ID, clientID);
         jsonObject.put(Thing.THING_STATE, state);
         jsonObject.put(Thing.THING_TYPE, type);
@@ -267,6 +282,7 @@ public class MotionSensorStatusPacket implements Packet {
                     .build();
         }
         catch (Exception e) {
+            e.printStackTrace();
             throw new ThingParseException(e);
         }
     }

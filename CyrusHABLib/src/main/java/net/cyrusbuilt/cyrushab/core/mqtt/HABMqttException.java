@@ -14,4 +14,12 @@ public class HABMqttException extends Exception {
     public HABMqttException(MqttException ex) {
         super(ex);
     }
+
+    /**
+     *
+     * @param message
+     */
+    public HABMqttException(String message) {
+        super(message);
+    }
 }
