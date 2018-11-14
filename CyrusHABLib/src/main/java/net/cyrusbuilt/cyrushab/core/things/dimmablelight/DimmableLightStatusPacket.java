@@ -67,6 +67,14 @@ public class DimmableLightStatusPacket implements Packet {
    }
 
     /**
+     * Gets the Thing type.
+     * @return The Thing type.
+     */
+   public ThingType getType() {
+        return ThingType.DIMMABLE_LIGHT;
+   }
+
+    /**
      * Gets the current light level.
      * @return The light level.
      */
@@ -188,7 +196,7 @@ public class DimmableLightStatusPacket implements Packet {
            clientID = MqttClient.generateClientId();
        }
 
-       int type = ThingType.SWITCH.getValue();
+       int type = ThingType.DIMMABLE_LIGHT.getValue();
        Timestamp tstamp = _timestamp;
        if (tstamp == null) {
            tstamp = Timestamp.valueOf(LocalDateTime.now());
@@ -203,7 +211,7 @@ public class DimmableLightStatusPacket implements Packet {
        jsonObject.put(Thing.THING_TYPE, type);
        jsonObject.put(Thing.THING_ENABLED, _isEnabled);
        jsonObject.put(Thing.THING_READONLY, _isReadonly);
-       jsonObject.put(Thing.THING_TIMESTAMP, tstamp);
+       jsonObject.put(Thing.THING_TIMESTAMP, tstamp.toString());
        return jsonObject.toJSONString();
    }
 

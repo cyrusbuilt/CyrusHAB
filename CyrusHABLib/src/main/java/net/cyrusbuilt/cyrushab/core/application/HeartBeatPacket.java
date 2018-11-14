@@ -4,6 +4,8 @@ import net.cyrusbuilt.cyrushab.core.telemetry.HABSystem;
 import net.cyrusbuilt.cyrushab.core.telemetry.SystemStatus;
 import net.cyrusbuilt.cyrushab.core.things.Packet;
 
+import net.cyrusbuilt.cyrushab.core.things.Thing;
+import net.cyrusbuilt.cyrushab.core.things.ThingType;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.json.simple.JSONObject;

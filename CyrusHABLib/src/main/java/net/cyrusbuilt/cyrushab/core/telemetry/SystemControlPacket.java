@@ -51,7 +51,7 @@ public class SystemControlPacket implements Packet {
      * Sets the control command.
      * @param command The command.
      */
-    private void setCommand(SystemCommand command) {
+    public void setCommand(SystemCommand command) {
         _command = command;
     }
 
@@ -118,6 +118,7 @@ public class SystemControlPacket implements Packet {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(HABSystem.SYS_CLIENT_ID, clientID);
         jsonObject.put(HABSystem.SYS_COMMAND, command);
+        jsonObject.put(Thing.THING_TYPE, ThingType.SYSTEM.getValue());
         jsonObject.put(HABSystem.SYS_TIMESTAMP, tstamp.toString());
         return jsonObject.toJSONString();
     }

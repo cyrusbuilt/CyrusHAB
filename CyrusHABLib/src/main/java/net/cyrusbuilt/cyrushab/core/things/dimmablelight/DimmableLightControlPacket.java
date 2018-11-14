@@ -67,6 +67,14 @@ public class DimmableLightControlPacket implements Packet {
     }
 
     /**
+     * Gets the Thing type.
+     * @return The Thing type.
+     */
+    public ThingType getType() {
+        return ThingType.DIMMABLE_LIGHT;
+    }
+
+    /**
      * Gets the light level.
      * @return The light level.
      */
